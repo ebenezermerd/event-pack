@@ -1,0 +1,26 @@
+# # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# # dependencies
+# /Event_Ease-Backend/node_modules/
+# /eventease/node_modules/
+
+# # next.js
+# /eventease/.next/
+# /eventease/out/
+
+# # production
+# /evenetease/build
+# /Event_Ease-Backend/build
+
+# # debug
+# npm-debug.log*
+# yarn-debug.log*
+# yarn-error.log*
+# .pnpm-debug.log*
+
+# # vercel
+# .vercel
+
+# # typescript
+# *.tsbuildinfo
+# next-env.d.ts

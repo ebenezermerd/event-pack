@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventEase API - Welcome</title>
+  <style>
+    :root {
+      --primary-color: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #93c5fd;
+      --secondary-color: #8b5cf6;
+      --secondary-light: #c4b5fd;
+      --background: #ffffff;
+      --foreground: #0f172a;
+      --muted: #f1f5f9;
+      --muted-foreground: #64748b;
+      --card-bg: rgba(255, 255, 255, 0.8);
+      --card-border: rgba(209, 213, 219, 0.5);
+      --hero-bg-from: 215 25% 27%;
+      --hero-bg-via: 215 25% 27%;
+      --hero-bg-to: 217 33% 17%;
+      --hero-text: 0 0% 100%;
+      --hero-muted-text: 215 20% 65%;
+    }
+
+    .dark {
+      --background: #0f172a;
+      --foreground: #f8fafc;
+      --muted: #1e293b;
+      --muted-foreground: #94a3b8;
+      --card-bg: rgba(30, 41, 59, 0.8);
+      --card-border: rgba(51, 65, 85, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(to bottom right, hsl(var(--hero-bg-from)), hsl(var(--hero-bg-via)), hsl(var(--hero-bg-to)));
+      color: hsl(var(--hero-text));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .hero {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      padding: 6rem 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+
+    .pattern {
+      position: absolute;
+      inset: 0;
+      z-index: -10;
+      opacity: 0.10;
+    }
+
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(20px);
+      opacity: 0.5;
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    .circle-1 {
+      top: 10%;
+      right: 5%;
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(to bottom right, var(--secondary-color), transparent);
+      animation-delay: 0s;
+    }
+
+    .circle-2 {
+      bottom: 20%;
+      left: 10%;
+      width: 250px;
+      height: 250px;
+      background: linear-gradient(to bottom right, var(--primary-color), transparent);
+      animation-delay: -2s;
+    }
+
+    .circle-3 {
+      top: 40%;
+      right: -10%;
+      width: 350px;
+      height: 350px;
+      background: linear-gradient(to bottom left, var(--primary-light), transparent);
+      animation-delay: -4s;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1) translate(0, 0);
+      }
+      50% {
+        transform: scale(1.05) translate(-10px, 10px);
+      }
+    }
+
+    .hero-content {
+      max-width: 700px;
+      z-index: 10;
+      animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .badge {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: hsl(var(--hero-text));
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      display: inline-block;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(to right, #fff, #d1d5db);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text {
+      background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      font-size: 1.125rem;
+      line-height: 1.6;
+      color: hsl(var(--hero-muted-text));
+      margin-bottom: 2rem;
+      max-width: 600px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .primary {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+    }
+
+    .primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+    }
+
+    .outline {
+      background-color: transparent;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .outline:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .endpoint-card {
+      margin-top: 3rem;
+      background-color: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      border: 1px solid var(--card-border);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .endpoint-card.active {
+      max-height: 1000px;
+      opacity: 1;
+      margin-top: 2rem;
+    }
+
+    .endpoint-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .endpoint-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    .method {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      color: white;
+    }
+
+    .get {
+      background-color: #10b981;
+    }
+
+    .post {
+      background-color: #3b82f6;
+    }
+
+    .endpoint-url {
+      font-family: monospace;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+    }
+
+    .endpoint-description {
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 100;
+    }
+
+    footer {
+      padding: 2rem 0;
+      text-align: center;
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+      }
+      .hero {
+        padding: 4rem 0;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeToggle">🌙</button>
+  <div class="hero">
+    <div class="pattern">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-width="0.5" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#smallGrid)" />
+      </svg>
+    </div>
+    <div class="circle circle-1"></div>
+    <div class="circle circle-2"></div>
+    <div class="circle circle-3"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="badge">API Server</div>
+        <h1>Welcome to <span class="gradient-text">EventEase</span> API</h1>
+        <p>
+          Your server is running successfully. This is the backend API for the EventEase platform, designed for event management in Ethiopia.
+        </p>
+        <div class="button-group">
+          <button class="button primary" id="showEndpoints">View API Endpoints</button>
+          <a href="/health" class="button outline">Check Health</a>
+        </div>
+
+        <div class="endpoint-card" id="endpointCard">
+          <div class="endpoint-header">
+            <span class="endpoint-title">Available Endpoints</span>
+          </div>
+          
+          <div class="endpoint-item">
+            <div class="endpoint-header">
+              <span class="endpoint-title">Health Check</span>
+              <span class="method get">GET</span>
+            </div>
+            <div class="endpoint-url">/health</div>
+            <div class="endpoint-description">
+              Check if the API server is running properly.
+            </div>
+          </div>
+          
+          <div class="endpoint-item">
+            <div class="endpoint-header">
+              <span class="endpoint-title">User Authentication</span>
+              <span class="method post">POST</span>
+            </div>
+            <div class="endpoint-url">/api/login</div>
+            <div class="endpoint-description">
+              Authenticate users and receive a JWT token.
+            </div>
+          </div>
+          
+          <div class="endpoint-item">
+            <div class="endpoint-header">
+              <span class="endpoint-title">User Registration</span>
+              <span class="method post">POST</span>
+            </div>
+            <div class="endpoint-url">/api/register</div>
+            <div class="endpoint-description">
+              Register a new user account.
+            </div>
+          </div>
+          
+          <div class="endpoint-item">
+            <div class="endpoint-header">
+              <span class="endpoint-title">Events List</span>
+              <span class="method get">GET</span>
+            </div>
+            <div class="endpoint-url">/api/events</div>
+            <div class="endpoint-description">
+              Get a list of all published events.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="container">
+      &copy; 2025 EventEase. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    // Toggle endpoints card
+    const showEndpointsButton = document.getElementById('showEndpoints');
+    const endpointCard = document.getElementById('endpointCard');
+    
+    showEndpointsButton.addEventListener('click', () => {
+      endpointCard.classList.toggle('active');
+      if (endpointCard.classList.contains('active')) {
+        showEndpointsButton.textContent = 'Hide API Endpoints';
+      } else {
+        showEndpointsButton.textContent = 'View API Endpoints';
+      }
+    });
+
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+    
+    themeToggle.addEventListener('click', () => {
+      body.classList.toggle('dark');
+      if (body.classList.contains('dark')) {
+        themeToggle.textContent = '☀️';
+      } else {
+        themeToggle.textContent = '🌙';
+      }
+    });
+  </script>
+</body>
+</html> 

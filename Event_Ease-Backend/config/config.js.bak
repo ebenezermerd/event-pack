@@ -1,0 +1,61 @@
+// routes/organizerRoutes.js
+const express = require("express")
+const router = express.Router()
+const organizerController = require("../controllers/organizerController")
+const { userAuth, checkRole } = require("../middleware/authMiddleware")
+const validate = require("../middleware/validate")
+const Joi = require("joi")
+
+// Validation schemas
+const applySchema = Joi.object({
+  companyName: Joi.string().required(),
+  description: Joi.string().optional(),
+  logo: Joi.string().optional(),
+  website: Joi.string().optional(),
+  address: Joi.string().optional(),
+  region: Joi.string().optional(),
+  tinNumber: Joi.string().required(),
+  verificationDocuments: Joi.array().items(Joi.string()).required(),
+})
+
+const updateProfileSchema = Joi.object({
+  companyName: Joi.string().optional(),
+  description: Joi.string().optional(),
+  logo: Joi.string().optional(),
+  website: Joi.string().optional(),
+  socialMedia: Joi.object().optional(),
+  address: Joi.string().optional(),
+  region: Joi.string().optional(),
+})
+
+// Apply to become an organizer
+router.post("/organizers/apply", userAuth, validate(applySchema), organizerController.applyToBeOrganizer)
+
+// Organizer profile routes
+router.get("/organizers/profile", userAuth, checkRole("organizer"), organizerController.getOrganizerProfile)
+router.put(
+  "/organizers/profile",
+  userAuth,
+  checkRole("organizer"),
+  validate(updateProfileSchema),
+  organizerController.updateOrganizerProfile,
+)
+
+// Organizer events routes
+router.get("/organizers/events", userAuth, checkRole("organizer"), organizerController.getOrganizerEvents)
+router.get("/organizers/dashboard", userAuth, checkRole("organizer"), organizerController.getOrganizerDashboard)
+router.get(
+  "/organizers/events/:eventId/attendees",
+  userAuth,
+  checkRole("organizer"),
+  organizerController.getEventAttendees,
+)
+router.put(
+  "/organizers/events/:eventId/attendees/:attendeeId/check-in",
+  userAuth,
+  checkRole("organizer"),
+  organizerController.checkInAttendee,
+)
+router.get("/organizers/events/:id/analytics", userAuth, checkRole("organizer"), organizerController.getEventAnalytics)
+
+module.exports = router

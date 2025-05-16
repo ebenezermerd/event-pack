@@ -1,0 +1,94 @@
+Executing (default): SELECT 1+1 AS result
+Database connection has been established successfully.
+Using existing database structure.
+Server is running on port 3000
+Access the API at http://localhost:3000/api
+[0mGET /health [32m200[0m 16.190 ms - 45[0m
+Executing (default): SELECT `id`, `email`, `password`, `name`, `phone`, `avatar`, `bio`, `address`, `role`, `status`, `joinDate`, `lastLogin`, `emailVerified`, `resetPasswordToken`, `resetPasswordExpires`, `preferences`, `createdAt`, `updatedAt` FROM `users` AS `User` WHERE `User`.`email` = 'testuser@example.com';
+Executing (default): INSERT INTO `users` (`id`,`email`,`password`,`name`,`phone`,`role`,`status`,`joinDate`,`emailVerified`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?);
+Registration error: Error
+    at Query.run (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+    at /home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/sequelize/lib/sequelize.js:315:28
+    at async MySQLQueryInterface.insert (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/sequelize/lib/dialects/abstract/query-interface.js:308:21)
+    at async model.save (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/sequelize/lib/model.js:2490:35)
+    at async User.create (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/sequelize/lib/model.js:1362:12)
+    at async exports.register (/home/epnics/Documents/projects/event/Event_Ease-Backend/controllers/authController.js:43:18) {
+  name: 'SequelizeDatabaseError',
+  parent: Error: Data truncated for column 'role' at row 1
+      at Packet.asError (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/packets/packet.js:740:17)
+      at Execute.execute (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/commands/command.js:29:26)
+      at Connection.handlePacket (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/base/connection.js:475:34)
+      at PacketParser.onPacket (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/base/connection.js:93:12)
+      at PacketParser.executeStart (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/packet_parser.js:75:16)
+      at Socket.<anonymous> (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/base/connection.js:100:25)
+      at Socket.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:191:23) {
+    code: 'WARN_DATA_TRUNCATED',
+    errno: 1265,
+    sqlState: '01000',
+    sqlMessage: "Data truncated for column 'role' at row 1",
+    sql: 'INSERT INTO `users` (`id`,`email`,`password`,`name`,`phone`,`role`,`status`,`joinDate`,`emailVerified`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?);',
+    parameters: [
+      '06c96bbc-03a8-44a6-b52f-355b04724c0a',
+      'testuser@example.com',
+      '$2a$10$BLO/UfYe4K7MBQEUS0aXE.Zp5C8PBv92w5uu4ggAGL.UhV0CCc2Fe',
+      'Test User',
+      null,
+      'user',
+      'active',
+      '2025-05-13 14:17:57',
+      false,
+      '2025-05-13 14:17:57',
+      '2025-05-13 14:17:57'
+    ]
+  },
+  original: Error: Data truncated for column 'role' at row 1
+      at Packet.asError (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/packets/packet.js:740:17)
+      at Execute.execute (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/commands/command.js:29:26)
+      at Connection.handlePacket (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/base/connection.js:475:34)
+      at PacketParser.onPacket (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/base/connection.js:93:12)
+      at PacketParser.executeStart (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/packet_parser.js:75:16)
+      at Socket.<anonymous> (/home/epnics/Documents/projects/event/Event_Ease-Backend/node_modules/mysql2/lib/base/connection.js:100:25)
+      at Socket.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:191:23) {
+    code: 'WARN_DATA_TRUNCATED',
+    errno: 1265,
+    sqlState: '01000',
+    sqlMessage: "Data truncated for column 'role' at row 1",
+    sql: 'INSERT INTO `users` (`id`,`email`,`password`,`name`,`phone`,`role`,`status`,`joinDate`,`emailVerified`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?);',
+    parameters: [
+      '06c96bbc-03a8-44a6-b52f-355b04724c0a',
+      'testuser@example.com',
+      '$2a$10$BLO/UfYe4K7MBQEUS0aXE.Zp5C8PBv92w5uu4ggAGL.UhV0CCc2Fe',
+      'Test User',
+      null,
+      'user',
+      'active',
+      '2025-05-13 14:17:57',
+      false,
+      '2025-05-13 14:17:57',
+      '2025-05-13 14:17:57'
+    ]
+  },
+  sql: 'INSERT INTO `users` (`id`,`email`,`password`,`name`,`phone`,`role`,`status`,`joinDate`,`emailVerified`,`createdAt`,`updatedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?);',
+  parameters: [
+    '06c96bbc-03a8-44a6-b52f-355b04724c0a',
+    'testuser@example.com',
+    '$2a$10$BLO/UfYe4K7MBQEUS0aXE.Zp5C8PBv92w5uu4ggAGL.UhV0CCc2Fe',
+    'Test User',
+    null,
+    'user',
+    'active',
+    '2025-05-13 14:17:57',
+    false,
+    '2025-05-13 14:17:57',
+    '2025-05-13 14:17:57'
+  ]
+}
+[0mPOST /api/register [31m500[0m 918.973 ms - 71[0m
