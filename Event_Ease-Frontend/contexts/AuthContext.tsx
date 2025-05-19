@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       // Use a single endpoint but pass the role
-      const endpoint = `/api/auth/login`
+      const endpoint = `/api/login`
 
       const data = await apiClient.post(endpoint, {
         email,
@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (userRole === "admin") {
         router.push("/dashboard/admin")
       } else {
-        router.push("/dashboard")
+        router.push("/my-events")
       }
     } catch (err) {
       console.error("Login error:", err)

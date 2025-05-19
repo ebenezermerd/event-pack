@@ -7,6 +7,7 @@ const morgan = require("morgan")
 const path = require("path")
 const sequelize = require("./config/database")
 const errorHandler = require("./middleware/errorHandler")
+const EventRelationship = require("./models/eventRelationship")
 
 // Import routes
 const authRoutes = require("./routes/authRoutes")
@@ -111,6 +112,24 @@ app.get("/health", (req, res) => {
 // Error handling middleware
 app.use(errorHandler)
 
+// Create missing tables
+const createMissingTables = async () => {
+  try {
+    // Sync EventRelationship table (create if not exists)
+    await EventRelationship.sync({ alter: true });
+    console.log("EventRelationship table synchronized successfully");
+
+    // Ensure the unique index exists
+    await sequelize.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS unique_relationship 
+      ON event_relationships (eventId, relatedEventId);
+    `);
+  } catch (error) {
+    console.error("Error creating tables:", error);
+    // Non-fatal error, continue server startup
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -118,7 +137,10 @@ const startServer = async () => {
     await sequelize.authenticate()
     console.log("Database connection has been established successfully.")
 
-    // Skip database sync - we've adapted the models to match the existing database
+    // Create missing tables
+    await createMissingTables();
+
+    // Skip full database sync - we've adapted the models to match the existing database
     console.log("Using existing database structure.")
 
     // Start server

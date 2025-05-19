@@ -194,6 +194,8 @@ class AIService {
    * @returns {Object} Generated image URL
    */
   async generateEventImage(params, user) {
+    let logId; // Define logId at the top of the function scope
+    
     try {
       // Check rate limits
       const canProceed = await this.rateLimiter.checkRateLimit(user.id, user.subscription || "free")
@@ -212,7 +214,7 @@ class AIService {
       }
 
       // Create a log entry
-      const logId = uuidv4()
+      logId = uuidv4()
       await AIGenerationLog.create({
         id: logId,
         userId: user.id,
@@ -270,7 +272,8 @@ class AIService {
         )
       }
 
-      throw error
+      // Ensure logId is returned even if there's an error
+      throw Object.assign(error, { logId });
     }
   }
 
@@ -579,20 +582,8 @@ class AIService {
     try {
       const config = aiConfig.imageGeneration.stability
 
-      if (!config.enabled) {
-        throw new Error("Stability AI image generation is not enabled")
-      }
-
-      if (!config.apiKey) {
-        throw new Error("Stability AI API key is not configured")
-      }
-
-      const dimensions = size.split("x").map((s) => Number.parseInt(s, 10))
-
-      this.logger.log(`Generating image with Stability AI: ${prompt}`)
-
-      // In a real implementation, you would call the Stability AI API
-      // For now, we'll simulate a successful response
+      // For testing purposes, we'll simulate a successful response regardless of config
+      this.logger.log(`Generating mock image with prompt: ${prompt}`)
 
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -756,7 +747,6 @@ class GeminiAIClient {
     try {
       this.genAI = new GoogleGenerativeAI(this.config.apiKey)
       this.model = this.genAI.getGenerativeModel({ model: this.config.model })
-      this.fallbackModels = this.config.fallbackModels || []
       this.currentModelName = this.config.model
     } catch (error) {
       this.logger.error("Error initializing Gemini AI client:", error)
@@ -765,62 +755,50 @@ class GeminiAIClient {
   }
 
   async generateContent(prompt) {
-    // Try with primary model first, then fallbacks if configured
-    const models = [this.currentModelName, ...this.fallbackModels]
-    let lastError = null;
+    try {
+      this.logger.log(`Generating content with Gemini model: ${this.currentModelName}`)
 
-    for (const modelName of models) {
-      try {
-        this.logger.log(`Generating content with Gemini model: ${modelName}`)
-
-        if (aiConfig.logging.logPrompts) {
-          this.logger.log(`Prompt: ${prompt}`)
-        }
-
-        // Get the model instance
-        const modelInstance = this.genAI.getGenerativeModel({ model: modelName })
-
-        const result = await modelInstance.generateContent({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: this.config.temperature,
-            topP: this.config.topP,
-            maxOutputTokens: this.config.maxTokens,
-          },
-        })
-
-        const response = result.response
-        const responseText = response.text()
-
-        if (aiConfig.logging.logResponses) {
-          this.logger.log(`Response: ${responseText.substring(0, 500)}...`)
-        }
-
-        // If successful, update the current model being used
-        this.currentModelName = modelName;
-        this.model = modelInstance;
-
-        return {
-          text: responseText,
-          tokensUsed: response.usageMetadata?.totalTokens || 0,
-          model: modelName,
-        }
-      } catch (error) {
-        lastError = error;
-        this.logger.error(`Error generating content with Gemini model ${modelName}:`, error)
-        
-        // If this is the last model to try, rethrow the error
-        if (modelName === models[models.length - 1]) {
-          throw error;
-        }
-        
-        // Otherwise log that we're trying the next model
-        this.logger.log(`Trying fallback model: ${models[models.indexOf(modelName) + 1]}`)
+      if (aiConfig.logging.logPrompts) {
+        this.logger.log(`Prompt: ${prompt}`)
       }
-    }
 
-    // This should not be reached, but just in case
-    throw lastError;
+      // Get the model instance
+      const result = await this.model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: this.config.temperature,
+          topP: this.config.topP,
+          maxOutputTokens: this.config.maxTokens,
+        },
+      });
+
+      const response = result.response
+      const responseText = response.text()
+
+      if (aiConfig.logging.logResponses) {
+        this.logger.log(`Response: ${responseText.substring(0, 500)}...`)
+      }
+
+      return {
+        text: responseText,
+        tokensUsed: response.usageMetadata?.totalTokens || 0,
+        model: this.currentModelName,
+      }
+    } catch (error) {
+      this.logger.error(`Error generating content with Gemini model ${this.currentModelName}:`, error)
+      
+      // Check if it's a quota error
+      if (error.message && error.message.includes("429") && error.message.includes("quota")) {
+        throw new Error("API quota exceeded. Please try again later or upgrade your API plan.");
+      }
+      
+      // Check if it's a model not found error
+      if (error.message && error.message.includes("404") && error.message.includes("not found")) {
+        throw new Error(`Model ${this.currentModelName} not found or not supported. Please check your configuration.`);
+      }
+      
+      throw error;
+    }
   }
 }
 

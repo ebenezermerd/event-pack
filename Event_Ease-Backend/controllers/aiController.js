@@ -4,6 +4,7 @@ const aiService = require("../services/ai-service")
 const EventTemplate = require("../models/eventTemplate")
 const AIGenerationLog = require("../models/aiGenerationLog")
 const { validationResult } = require("express-validator")
+const { Op } = require("sequelize")
 
 // Generate event content
 exports.generateEventContent = async (req, res) => {

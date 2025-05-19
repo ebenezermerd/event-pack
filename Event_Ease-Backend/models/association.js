@@ -26,6 +26,7 @@ const EventReminder = require("./eventReminder")
 const UserEventInteraction = require("./userEventInteraction")
 const Calendar = require("./calendar")
 const CalendarEvent = require("./calendarEvent")
+const EventRelationship = require("./eventRelationship")
 
 // User and Organizer associations
 User.hasOne(Organizer, { foreignKey: "userId" })
@@ -161,6 +162,8 @@ User.hasMany(EventTemplate, { foreignKey: "userId" })
 AIGenerationLog.belongsTo(User, { foreignKey: "userId" })
 User.hasMany(AIGenerationLog, { foreignKey: "userId" })
 
+// We don't need to redefine the EventRelationship associations here since they are defined in the model file
+
 module.exports = {
   User,
   Organizer,
@@ -189,4 +192,5 @@ module.exports = {
   CalendarEvent,
   EventTemplate,
   AIGenerationLog,
+  EventRelationship,
 }

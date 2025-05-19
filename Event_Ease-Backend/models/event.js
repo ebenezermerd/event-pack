@@ -95,6 +95,18 @@ const Event = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    // Temporarily commented out until the database schema is updated
+    /*
+    seriesId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'event_series',
+        key: 'id'
+      },
+      comment: "If this event is part of a series, reference the series ID"
+    }
+    */
   },
   {
     timestamps: true,
@@ -107,5 +119,7 @@ const Event = sequelize.define(
 // Establish association with Organizer model
 Event.belongsTo(Organizer, { foreignKey: "organizerId" })
 Organizer.hasMany(Event, { foreignKey: "organizerId" })
+
+// Note: The relationship with EventRelationship model is defined in eventRelationship.js
 
 module.exports = Event

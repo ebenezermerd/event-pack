@@ -9,16 +9,19 @@ import { handleApiError } from "@/lib/api-client"
 
 // Define types for events
 export interface EventType {
-  id: number
+  id: string
   title: string
   caption?: string
   description: string
+  longDescription?: string
   startDate: string
   endDate: string
   location: string
+  address?: string
   capacity: number
   image?: string
   images?: string[]
+  gallery?: string[] // For backward compatibility
   registrationDeadline?: string
   isPublic: boolean
   approvalStatus: "pending" | "approved" | "rejected"
@@ -31,10 +34,53 @@ export interface EventType {
     description?: string
     email?: string
     phone?: string
+    website?: string
   }
   attendees?: number
+  maxAttendees?: number
   category?: string
   time?: string
+  ticketTypes?: {
+    id: string | number
+    name: string
+    description?: string
+    price: string | number
+    available: boolean
+    benefits?: string[]
+    requirements?: string
+  }[]
+  schedule?: {
+    time: string
+    title: string
+    location?: string
+    speaker?: string
+    description?: string
+  }[]
+  faqs?: {
+    question: string
+    answer: string
+  }[]
+  relatedEvents?: RelatedEventType[]
+}
+
+// Define a type for related events which have a simpler structure
+export interface RelatedEventType {
+  id: string
+  title: string
+  date: string
+  time?: string
+  location: string
+  price?: string | number
+  category?: string
+  attendees?: number
+  image?: string
+  relationshipType?: "category" | "organizer" | "series" | "custom" | "recommended"
+  strength?: number
+  organizer?: {
+    id?: number | string
+    name: string
+    logo?: string
+  }
 }
 
 export interface EventFilters {
@@ -56,12 +102,12 @@ interface EventContextType {
 
   // Event actions
   fetchEvents: (filters?: EventFilters) => Promise<void>
-  fetchEventById: (id: number) => Promise<EventType | null>
+  fetchEventById: (id: string) => Promise<EventType | null>
   createEvent: (eventData: Partial<EventType>) => Promise<boolean>
-  updateEvent: (id: number, eventData: Partial<EventType>) => Promise<boolean>
-  deleteEvent: (id: number) => Promise<boolean>
-  bookEvent: (eventId: number) => Promise<boolean>
-  cancelBooking: (eventId: number) => Promise<boolean>
+  updateEvent: (id: string, eventData: Partial<EventType>) => Promise<boolean>
+  deleteEvent: (id: string) => Promise<boolean>
+  bookEvent: (id: string) => Promise<boolean>
+  cancelBooking: (id: string) => Promise<boolean>
 
   // Event state
   isLoading: boolean
@@ -146,15 +192,15 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
         setTotalPages(data.pagination.totalPages)
 
         // If this is the first page, also update featured events
-        if (currentPage === 1) {
-          // Get featured events
-          const featuredData = await EventService.getFeaturedEvents()
-          setFeaturedEvents(featuredData.events)
+        // if (currentPage === 1) {
+        //   // Get featured events
+        //   const featuredData = await EventService.getFeaturedEvents()
+        //   setFeaturedEvents(featuredData.events)
 
-          // Get upcoming events
-          const upcomingData = await EventService.getUpcomingEvents()
-          setUpcomingEvents(upcomingData.events)
-        }
+        //   // Get upcoming events
+        //   const upcomingData = await EventService.getUpcomingEvents()
+        //   setUpcomingEvents(upcomingData.events)
+        // }
       } catch (err) {
         console.error("Error fetching events:", err)
         setError(handleApiError(err))
@@ -166,12 +212,17 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
   )
 
   // Fetch a single event by ID
-  const fetchEventById = useCallback(async (id: number) => {
+  const fetchEventById = useCallback(async (id: string) => {
     setIsLoading(true)
     setError(null)
 
     try {
       const data = await EventService.getEventById(id)
+      
+      // If the event data is returned and formatted properly by the service,
+      // there's no need to manually add relatedEvents here as it's already 
+      // included in the formatted event object
+      
       setCurrentEvent(data.event)
       return data.event
     } catch (err) {
@@ -227,7 +278,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Update an existing event
   const updateEvent = useCallback(
-    async (id: number, eventData: Partial<EventType>) => {
+    async (id: string, eventData: Partial<EventType>) => {
       if (!isAuthenticated || role !== "organizer") {
         setError("You must be logged in as an organizer to update events")
         return false
@@ -273,7 +324,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Delete an event
   const deleteEvent = useCallback(
-    async (id: number) => {
+    async (id: string) => {
       if (!isAuthenticated || role !== "organizer") {
         setError("You must be logged in as an organizer to delete events")
         return false
@@ -321,7 +372,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Book an event
   const bookEvent = useCallback(
-    async (eventId: number) => {
+    async (id: string) => {
       if (!isAuthenticated || role !== "attendee") {
         setError("You must be logged in as an attendee to book events")
         return false
@@ -331,7 +382,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null)
 
       try {
-        const data = await EventService.bookEvent(eventId)
+        const data = await EventService.bookEvent(id)
 
         // Show success message
         toast({
@@ -363,7 +414,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Cancel a booking
   const cancelBooking = useCallback(
-    async (eventId: number) => {
+    async (id: string) => {
       if (!isAuthenticated || role !== "attendee") {
         setError("You must be logged in as an attendee to cancel bookings")
         return false
@@ -373,7 +424,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null)
 
       try {
-        const data = await EventService.cancelBooking(eventId)
+        const data = await EventService.cancelBooking(id)
 
         // Show success message
         toast({
@@ -382,7 +433,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
         })
 
         // Remove from my bookings
-        setMyBookings((prev) => prev.filter((event) => event.id !== eventId))
+        setMyBookings((prev) => prev.filter((event) => event.id !== id))
         return true
       } catch (err) {
         console.error("Error cancelling booking:", err)

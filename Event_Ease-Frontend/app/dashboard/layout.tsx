@@ -1,5 +1,5 @@
 import type React from "react"
-import { Sidebar } from "@/components/dashboard/sidebar"
+import { DashboardSidebar as Sidebar } from "@/components/dashboard/sidebar"
 import { TopNav } from "@/components/dashboard/top-nav"
 import ProtectedRoute from "@/components/protected-route"
 

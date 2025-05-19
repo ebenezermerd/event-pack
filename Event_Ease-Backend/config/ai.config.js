@@ -5,7 +5,7 @@ module.exports = {
   providers: {
     gemini: {
       apiKey: process.env.GEMINI_API_KEY,
-      model: process.env.GEMINI_MODEL || "gemini-pro",
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
       maxTokens: 8192,
       temperature: 0.7,
       topP: 0.95,
@@ -35,28 +35,15 @@ module.exports = {
   },
 
   imageGeneration: {
-    provider: process.env.IMAGE_GENERATION_PROVIDER || "stability",
+    provider: "disabled",
     stability: {
-      apiKey: process.env.STABILITY_API_KEY,
-      engine: process.env.STABILITY_ENGINE || "stable-diffusion-xl-1024-v1-0",
-      dimensions: "1024x1024",
-      steps: 30,
-      cfgScale: 7,
-      enabled: process.env.STABILITY_API_KEY ? true : false,
-      timeout: 60000, // 60 seconds
+      enabled: false,
     },
     openai: {
-      apiKey: process.env.OPENAI_API_KEY,
-      model: "dall-e-3",
-      dimensions: "1024x1024",
-      quality: "standard",
-      enabled: process.env.OPENAI_API_KEY ? true : false,
-      timeout: 60000, // 60 seconds
+      enabled: false,
     },
     midjourney: {
-      apiKey: process.env.MIDJOURNEY_API_KEY,
-      enabled: process.env.MIDJOURNEY_API_KEY ? true : false,
-      timeout: 120000, // 120 seconds
+      enabled: false,
     },
   },
 
@@ -158,21 +145,7 @@ Format your response as a valid JSON object with the following structure:
 
 Make sure the content is professional, engaging, and appropriate for the Ethiopian market. Include local cultural references where appropriate.
     `,
-    imagePromptTemplate: `
-Create a professional, high-quality image for an event in Ethiopia with the following details:
-
-{{#description}}{{description}}{{/description}}
-
-The image should be:
-- Professional and suitable for an event website
-- Culturally appropriate for Ethiopia
-- High resolution and visually appealing
-- Well-composed with balanced elements
-- Appropriate for the event type ({{eventType}})
-
-Additional details:
-{{#additionalDetails}}{{additionalDetails}}{{/additionalDetails}}
-    `,
+    imagePromptTemplate: ``,
   },
 
   // Content moderation

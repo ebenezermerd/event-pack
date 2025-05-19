@@ -36,7 +36,7 @@ export default function AuthRouteGuard({ children }: AuthRouteGuardProps) {
             router.push("/dashboard/organizer")
             break
           case "attendee":
-            router.push("/dashboard")
+            router.push("/my-events")
             break
           default:
             router.push("/")

@@ -159,8 +159,21 @@ export const apiClient = new ApiClient()
 
 // Helper function to handle API errors
 export const handleApiError = (error: any): string => {
-  if (error instanceof Error) {
-    return error.message
+  // If it's an ApiError (from our fetch request)
+  if (error && error.message) {
+    return error.message;
   }
-  return "An unknown error occurred"
+  
+  // If it's a standard Error
+  if (error instanceof Error) {
+    return error.message;
+  }
+  
+  // If there's a data property with a message
+  if (error && error.data && error.data.message) {
+    return error.data.message;
+  }
+  
+  // Fallback for unexpected error formats
+  return "An unknown error occurred";
 }

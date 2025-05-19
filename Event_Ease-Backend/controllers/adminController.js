@@ -7,6 +7,8 @@ const Event = require("../models/event")
 const Order = require("../models/order")
 const SystemSetting = require("../models/systemSetting")
 const { getPagination, getPagingData } = require("../utils/pagination")
+const EventRelationship = require("../models/eventRelationship")
+const { v4: uuidv4 } = require("uuid")
 
 // Get Admin Dashboard Stats
 exports.getAdminDashboard = async (req, res) => {
@@ -613,3 +615,181 @@ exports.updateSystemSettings = async (req, res) => {
     });
   }
 }
+
+// Create Event Relationship
+exports.createEventRelationship = async (req, res) => {
+  try {
+    const { eventId, relatedEventId, relationshipType, strength } = req.body;
+    const adminId = req.user.id;
+
+    // Validate input
+    if (!eventId || !relatedEventId) {
+      return res.status(400).json({
+        success: false,
+        message: "Both eventId and relatedEventId are required",
+      });
+    }
+
+    // Check if both events exist
+    const event = await Event.findByPk(eventId);
+    const relatedEvent = await Event.findByPk(relatedEventId);
+
+    if (!event || !relatedEvent) {
+      return res.status(404).json({
+        success: false,
+        message: "One or both events not found",
+      });
+    }
+
+    // Check if a relationship already exists
+    const existingRelationship = await EventRelationship.findOne({
+      where: {
+        eventId,
+        relatedEventId,
+      },
+    });
+
+    if (existingRelationship) {
+      // Update existing relationship
+      await existingRelationship.update({
+        relationshipType: relationshipType || existingRelationship.relationshipType,
+        strength: strength || existingRelationship.strength,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Event relationship updated successfully",
+        relationship: existingRelationship,
+      });
+    }
+
+    // Create new relationship
+    const relationship = await EventRelationship.create({
+      id: uuidv4(),
+      eventId,
+      relatedEventId,
+      relationshipType: relationshipType || "custom",
+      strength: strength || 5,
+      createdBy: adminId,
+    });
+
+    // Create reverse relationship for better recommendations
+    await EventRelationship.create({
+      id: uuidv4(),
+      eventId: relatedEventId,
+      relatedEventId: eventId,
+      relationshipType: relationshipType || "custom",
+      strength: (strength || 5) - 1, // Slightly weaker in reverse
+      createdBy: adminId,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Event relationship created successfully",
+      relationship,
+    });
+  } catch (error) {
+    console.error("Create event relationship error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Delete Event Relationship
+exports.deleteEventRelationship = async (req, res) => {
+  try {
+    const { eventId, relatedEventId } = req.params;
+
+    // Delete the relationship
+    const deleted = await EventRelationship.destroy({
+      where: {
+        eventId,
+        relatedEventId,
+      },
+    });
+
+    // Also delete the reverse relationship if it exists
+    await EventRelationship.destroy({
+      where: {
+        eventId: relatedEventId,
+        relatedEventId: eventId,
+      },
+    });
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Event relationship not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Event relationship deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete event relationship error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get Event Relationships
+exports.getEventRelationships = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    // Check if event exists
+    const event = await Event.findByPk(eventId);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found",
+      });
+    }
+
+    // Get all relationships for this event
+    const relationships = await EventRelationship.findAll({
+      where: { eventId },
+      include: [
+        {
+          model: Event,
+          as: 'RelatedEvent',
+          attributes: ['id', 'title', 'eventDate', 'image', 'category'],
+        },
+      ],
+    });
+
+    // Format the relationships
+    const formattedRelationships = relationships.map((relationship) => ({
+      id: relationship.id,
+      eventId: relationship.eventId,
+      relatedEventId: relationship.relatedEventId,
+      relationshipType: relationship.relationshipType,
+      strength: relationship.strength,
+      relatedEvent: {
+        id: relationship.RelatedEvent.id,
+        title: relationship.RelatedEvent.title,
+        date: relationship.RelatedEvent.eventDate,
+        category: relationship.RelatedEvent.category,
+        image: relationship.RelatedEvent.image,
+      },
+    }));
+
+    res.status(200).json({
+      success: true,
+      relationships: formattedRelationships,
+    });
+  } catch (error) {
+    console.error("Get event relationships error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

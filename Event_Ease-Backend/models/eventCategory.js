@@ -1,10 +1,9 @@
-// models/eventFAQ.js
 const { DataTypes } = require("sequelize")
 const sequelize = require("../config/database")
 const Event = require("./event")
 
-const EventFAQ = sequelize.define(
-  "EventFAQ",
+const EventCategory = sequelize.define(
+  "EventCategory",
   {
     id: {
       type: DataTypes.UUID,
@@ -13,36 +12,30 @@ const EventFAQ = sequelize.define(
     },
     eventId: {
       type: DataTypes.UUID,
-      allowNull: false,
       references: {
         model: Event,
         key: "id",
       },
+      allowNull: false,
     },
-    question: {
+    categoryName: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    answer: {
+    description: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
-    order: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      comment: "Determines the display order of FAQs"
+    iconUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
     }
   },
   {
     timestamps: true,
-    tableName: "event_faqs",
+    tableName: "event_categories",
     charset: "utf8mb4",
     collate: "utf8mb4_general_ci",
-  }
+  },
 )
-
-// Establish association with Event model
-EventFAQ.belongsTo(Event, { foreignKey: "eventId" })
-Event.hasMany(EventFAQ, { foreignKey: "eventId" })
-
-module.exports = EventFAQ
+module.exports = EventCategory 

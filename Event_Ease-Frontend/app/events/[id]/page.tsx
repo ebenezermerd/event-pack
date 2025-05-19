@@ -1,12 +1,16 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { useEffect } from "react"
+import { useParams, notFound } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   CalendarDays,
   Clock,
@@ -24,190 +28,76 @@ import {
   CheckCircle2,
   Calendar,
 } from "lucide-react"
+import { useEvents } from "@/contexts/EventContext"
+import { RelatedEventType } from "@/contexts/EventContext"
 
-// Mock data for events
-const events = [
-  {
-    id: 1,
-    title: "Addis Tech Summit 2024",
-    description:
-      "Join us for the largest technology conference in Ethiopia, featuring keynote speakers, workshops, and networking opportunities with industry leaders. This year's theme is 'Innovation for Africa's Digital Future'.",
-    longDescription: `
-      <p>The Addis Tech Summit is Ethiopia's premier technology conference, bringing together tech enthusiasts, entrepreneurs, developers, and industry leaders from across Africa and beyond.</p>
-      
-      <p>This year's summit will focus on 'Innovation for Africa's Digital Future' and will feature:</p>
-      
-      <ul>
-        <li>Keynote speeches from global tech leaders</li>
-        <li>Panel discussions on emerging technologies</li>
-        <li>Hands-on workshops on AI, blockchain, and cloud computing</li>
-        <li>Startup pitch competition with prizes worth ETB 500,000</li>
-        <li>Networking sessions with investors and industry experts</li>
-        <li>Exhibition area showcasing the latest tech innovations</li>
-      </ul>
-      
-      <p>Whether you're a seasoned tech professional, a startup founder, or simply curious about the future of technology in Africa, the Addis Tech Summit offers valuable insights and connections to help you stay ahead in the rapidly evolving digital landscape.</p>
-    `,
-    date: "May 15, 2024",
-    time: "9:00 AM - 6:00 PM",
-    location: "Millennium Hall, Addis Ababa",
-    address: "Bole Road, Near Bole Medhanialem Church, Addis Ababa",
-    price: "ETB 500",
-    category: "Technology",
-    attendees: 320,
-    maxAttendees: 500,
-    image: "/placeholder.svg?height=600&width=1200&text=Addis+Tech+Summit",
-    gallery: [
-      "/placeholder.svg?height=400&width=600&text=Tech+Summit+1",
-      "/placeholder.svg?height=400&width=600&text=Tech+Summit+2",
-      "/placeholder.svg?height=400&width=600&text=Tech+Summit+3",
-      "/placeholder.svg?height=400&width=600&text=Tech+Summit+4",
-    ],
-    organizer: {
-      name: "TechEthiopia",
-      logo: "/placeholder.svg?height=100&width=100&text=TechEthiopia",
-      description:
-        "TechEthiopia is a leading technology community dedicated to advancing Ethiopia's tech ecosystem through events, training, and networking opportunities.",
-      events: 15,
-      followers: 2500,
-      website: "https://techethiopia.com",
-      email: "info@techethiopia.com",
-      phone: "+251 911 123 456",
-    },
-    ticketTypes: [
-      {
-        name: "Early Bird",
-        price: "ETB 350",
-        available: false,
-        benefits: ["Full access to all sessions", "Conference materials", "Lunch and refreshments"],
-      },
-      {
-        name: "Regular",
-        price: "ETB 500",
-        available: true,
-        benefits: ["Full access to all sessions", "Conference materials", "Lunch and refreshments"],
-      },
-      {
-        name: "VIP",
-        price: "ETB 1200",
-        available: true,
-        benefits: [
-          "Priority seating",
-          "Exclusive networking dinner",
-          "1-on-1 sessions with speakers",
-          "Full access to all sessions",
-          "Conference materials",
-          "Lunch and refreshments",
-        ],
-      },
-      {
-        name: "Student",
-        price: "ETB 250",
-        available: true,
-        benefits: ["Full access to all sessions", "Conference materials", "Lunch and refreshments"],
-        requirements: "Valid student ID required",
-      },
-    ],
-    schedule: [
-      {
-        time: "9:00 AM - 10:00 AM",
-        title: "Registration & Welcome Coffee",
-        location: "Main Lobby",
-      },
-      {
-        time: "10:00 AM - 11:00 AM",
-        title: "Opening Keynote: The Future of Tech in Africa",
-        speaker: "Dr. Betelhem Dessie, CEO of iCog Labs",
-        location: "Main Hall",
-      },
-      {
-        time: "11:15 AM - 12:30 PM",
-        title: "Panel Discussion: Building Scalable Tech Solutions for African Markets",
-        location: "Main Hall",
-      },
-      {
-        time: "12:30 PM - 1:30 PM",
-        title: "Lunch Break & Networking",
-        location: "Dining Area",
-      },
-      {
-        time: "1:30 PM - 3:00 PM",
-        title: "Parallel Workshops (AI, Blockchain, Cloud Computing)",
-        location: "Workshop Rooms",
-      },
-      {
-        time: "3:15 PM - 4:30 PM",
-        title: "Startup Pitch Competition",
-        location: "Innovation Stage",
-      },
-      {
-        time: "4:45 PM - 5:30 PM",
-        title: "Closing Keynote: Investing in Ethiopia's Tech Future",
-        location: "Main Hall",
-      },
-      {
-        time: "5:30 PM - 6:00 PM",
-        title: "Awards & Closing Remarks",
-        location: "Main Hall",
-      },
-    ],
-    faqs: [
-      {
-        question: "Is there parking available at the venue?",
-        answer:
-          "Yes, Millennium Hall offers free parking for attendees. Please arrive early as spaces fill up quickly.",
-      },
-      {
-        question: "Will presentations be available after the event?",
-        answer:
-          "Yes, all presentations will be shared with registered attendees via email within 3 days after the event.",
-      },
-      {
-        question: "Is there a dress code?",
-        answer: "Business casual attire is recommended for the summit.",
-      },
-      {
-        question: "Can I get a refund if I can't attend?",
-        answer:
-          "Refunds are available up to 7 days before the event. After that, you can transfer your ticket to someone else.",
-      },
-      {
-        question: "Will there be translation services available?",
-        answer:
-          "Yes, we will provide simultaneous translation between English and Amharic for all main stage sessions.",
-      },
-    ],
-  },
-  // More events would be defined here
-]
+export default function EventDetailPage() {
+  const params = useParams<{ id: string }>()
+  // Handle the possibility of null params
+  if (!params || !params.id) {
+    notFound()
+  }
+  
+  const eventId = params.id
+  
+  const { currentEvent, fetchEventById, isLoading, error } = useEvents()
 
-// Mock data for related events
-const relatedEvents = [
-  {
-    id: 5,
-    title: "Startup Pitch Competition",
-    date: "June 12, 2024",
-    time: "1:00 PM - 5:00 PM",
-    location: "iceaddis, Addis Ababa",
-    price: "ETB 250",
-    category: "Business",
-    attendees: 120,
-    image: "/placeholder.svg?height=300&width=500&text=Startup+Pitch",
-  },
-]
+  useEffect(() => {
+    // Fetch event details when component mounts
+    fetchEventById(eventId)
+  }, [eventId, fetchEventById])
 
-export default function EventDetailPage({ params }: { params: { id: string } }) {
-  const eventId = Number.parseInt(params.id)
-  const event = events.find((e) => e.id === eventId)
+  // Show loading state
+  if (isLoading || !currentEvent) {
+    return (
+      <>
+        <SiteHeader />
+        <main className="min-h-screen container py-8">
+          <div className="relative h-[40vh] md:h-[50vh] lg:h-[60vh] w-full mb-8">
+            <Skeleton className="h-full w-full" />
+          </div>
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1">
+              <Skeleton className="h-12 w-2/3 mb-4" />
+              <Skeleton className="h-6 w-full mb-2" />
+              <Skeleton className="h-6 w-full mb-2" />
+            </div>
+            <div className="lg:w-1/3">
+              <Skeleton className="h-40 w-full mb-4" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          </div>
+        </main>
+        <SiteFooter />
+      </>
+    )
+  }
 
-  if (!event) {
+  // Handle error or not found
+  if (error || !currentEvent) {
     notFound()
   }
 
-  // Get organizer's other events
-  const organizerOtherEvents = events
-    .filter((e) => e.id !== eventId && e.organizer?.name === event.organizer?.name)
-    .slice(0, 3)
+  // Get organizer's other events - properly typed now
+  const organizerOtherEvents = currentEvent.relatedEvents?.filter((e: RelatedEventType) => 
+    e.organizer?.name === currentEvent.organizer?.name
+  ) || []
+
+  // Get the related events - properly typed now
+  const relatedEvents = currentEvent.relatedEvents || []
+
+  // Format the date
+  const eventDate = new Date(currentEvent.startDate).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+
+  // Check if gallery exists and has length
+  const hasGallery = currentEvent.gallery && currentEvent.gallery.length > 0
+  const hasImages = currentEvent.images && currentEvent.images.length > 0
+  const galleryImages = hasGallery ? currentEvent.gallery : 
+                        hasImages ? currentEvent.images : []
 
   return (
     <>
@@ -215,32 +105,38 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
       <main className="min-h-screen">
         {/* Hero Section */}
         <div className="relative h-[40vh] md:h-[50vh] lg:h-[60vh] w-full overflow-hidden">
-          <Image src={event.image || "/placeholder.svg"} alt={event.title} fill className="object-cover" priority />
+          <Image 
+            src={currentEvent.image || "/placeholder.svg"} 
+            alt={currentEvent.title} 
+            fill 
+            className="object-cover" 
+            priority 
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
             <div className="container">
-              <Badge className="mb-4">{event.category}</Badge>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 max-w-4xl">{event.title}</h1>
+              {currentEvent.category && <Badge className="mb-4">{currentEvent.category}</Badge>}
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 max-w-4xl">{currentEvent.title}</h1>
               <div className="flex flex-wrap gap-4 text-white/90">
                 <div className="flex items-center">
                   <CalendarDays className="h-5 w-5 mr-2" />
-                  <span>{event.date}</span>
+                  <span>{eventDate}</span>
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 mr-2" />
-                  <span>{event.time}</span>
+                  <span>{currentEvent.time || "All day"}</span>
                 </div>
                 <div className="flex items-center">
                   <MapPin className="h-5 w-5 mr-2" />
-                  <span>{event.location}</span>
+                  <span>{currentEvent.location}</span>
                 </div>
                 <div className="flex items-center">
                   <Users className="h-5 w-5 mr-2" />
-                  <span>{event.attendees} attending</span>
+                  <span>{currentEvent.attendees || 0} attending</span>
                 </div>
                 <div className="flex items-center">
                   <Ticket className="h-5 w-5 mr-2" />
-                  <span>From {event.price}</span>
+                  <span>From {currentEvent.price ? `ETB ${currentEvent.price}` : "Free"}</span>
                 </div>
               </div>
             </div>
@@ -277,17 +173,19 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                 </TabsList>
                 <TabsContent value="about" className="pt-6">
                   <div className="prose prose-lg dark:prose-invert max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: event.longDescription }} />
+                    <div dangerouslySetInnerHTML={{ __html: currentEvent.longDescription || currentEvent.description }} />
                   </div>
 
+                  {/* Event Gallery - Fixed the conditional check */}
+                  {(galleryImages && galleryImages.length > 0) && (
                   <div className="mt-10">
                     <h3 className="text-2xl font-bold mb-4">Event Gallery</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {event.gallery.map((image, index) => (
+                        {galleryImages.map((image, index) => (
                         <div key={index} className="aspect-square relative rounded-lg overflow-hidden">
                           <Image
                             src={image || "/placeholder.svg"}
-                            alt={`${event.title} gallery image ${index + 1}`}
+                              alt={`${currentEvent.title} gallery image ${index + 1}`}
                             fill
                             className="object-cover hover:scale-105 transition-transform duration-300"
                           />
@@ -295,6 +193,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                       ))}
                     </div>
                   </div>
+                  )}
 
                   <div className="mt-10">
                     <h3 className="text-2xl font-bold mb-4">Location</h3>
@@ -302,8 +201,8 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                       <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row gap-6">
                           <div className="flex-1">
-                            <h4 className="text-lg font-semibold mb-2">{event.location}</h4>
-                            <p className="text-muted-foreground mb-4">{event.address}</p>
+                            <h4 className="text-lg font-semibold mb-2">{currentEvent.location}</h4>
+                            <p className="text-muted-foreground mb-4">{currentEvent.address || "Address not specified"}</p>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline">
                                 Get Directions
@@ -327,8 +226,9 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
 
                 <TabsContent value="schedule" className="pt-6">
                   <h3 className="text-2xl font-bold mb-6">Event Schedule</h3>
+                  {currentEvent.schedule && currentEvent.schedule.length > 0 ? (
                   <div className="space-y-6">
-                    {event.schedule.map((item, index) => (
+                      {currentEvent.schedule.map((item, index) => (
                       <Card key={index}>
                         <CardContent className="p-6">
                           <div className="flex flex-col md:flex-row gap-4">
@@ -339,12 +239,16 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                             <div className="md:w-3/4">
                               <h4 className="text-lg font-semibold">{item.title}</h4>
                               {item.speaker && <p className="text-muted-foreground mt-1">Speaker: {item.speaker}</p>}
-                            </div>
+                                {item.description && <p className="mt-2">{item.description}</p>}
+                              </div>
                           </div>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
+                  ) : (
+                    <p className="text-muted-foreground">No schedule information available for this event.</p>
+                  )}
 
                   <div className="mt-8 flex justify-center">
                     <Button variant="outline" className="gap-2">
@@ -356,8 +260,9 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
 
                 <TabsContent value="tickets" className="pt-6">
                   <h3 className="text-2xl font-bold mb-6">Ticket Options</h3>
+                  {currentEvent.ticketTypes && currentEvent.ticketTypes.length > 0 ? (
                   <div className="space-y-6">
-                    {event.ticketTypes.map((ticket, index) => (
+                      {currentEvent.ticketTypes.map((ticket, index) => (
                       <Card key={index} className={!ticket.available ? "opacity-70" : ""}>
                         <CardContent className="p-6">
                           <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -370,7 +275,10 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                                   </Badge>
                                 )}
                               </div>
-                              <div className="text-2xl font-bold text-primary mt-1">{ticket.price}</div>
+                                <div className="text-2xl font-bold text-primary mt-1">
+                                  {typeof ticket.price === 'number' ? `ETB ${ticket.price}` : ticket.price}
+                                </div>
+                                {ticket.benefits && ticket.benefits.length > 0 && (
                               <ul className="mt-4 space-y-2">
                                 {ticket.benefits.map((benefit, i) => (
                                   <li key={i} className="flex items-start gap-2">
@@ -379,6 +287,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                                   </li>
                                 ))}
                               </ul>
+                                )}
                               {ticket.requirements && (
                                 <div className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
                                   <Info className="h-4 w-4 shrink-0 mt-0.5" />
@@ -396,6 +305,9 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                       </Card>
                     ))}
                   </div>
+                  ) : (
+                    <p className="text-muted-foreground">No ticket information available for this event.</p>
+                  )}
 
                   <div className="mt-8 p-4 bg-muted rounded-lg">
                     <div className="flex items-start gap-3">
@@ -413,8 +325,9 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
 
                 <TabsContent value="faq" className="pt-6">
                   <h3 className="text-2xl font-bold mb-6">Frequently Asked Questions</h3>
+                  {currentEvent.faqs && currentEvent.faqs.length > 0 ? (
                   <div className="space-y-6">
-                    {event.faqs.map((faq, index) => (
+                      {currentEvent.faqs.map((faq, index) => (
                       <Card key={index}>
                         <CardContent className="p-6">
                           <h4 className="text-lg font-semibold mb-2">{faq.question}</h4>
@@ -423,6 +336,9 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                       </Card>
                     ))}
                   </div>
+                  ) : (
+                    <p className="text-muted-foreground">No FAQ information available for this event.</p>
+                  )}
 
                   <div className="mt-8 p-6 bg-muted rounded-lg text-center">
                     <h4 className="font-semibold mb-2">Still have questions?</h4>
@@ -436,45 +352,52 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
             {/* Sidebar */}
             <div className="lg:w-1/3 space-y-8">
               {/* Organizer Card */}
+              {currentEvent.organizer && (
               <Card>
                 <CardContent className="p-6">
                   <h3 className="text-xl font-bold mb-4">Event Organizer</h3>
                   <div className="flex items-center gap-4 mb-4">
                     <div className="h-16 w-16 relative rounded-lg overflow-hidden">
                       <Image
-                        src={event.organizer.logo || "/placeholder.svg"}
-                        alt={event.organizer.name}
+                          src={currentEvent.organizer.logo || "/placeholder.svg"}
+                          alt={currentEvent.organizer.name}
                         fill
                         className="object-cover"
                       />
                     </div>
                     <div>
-                      <h4 className="font-semibold">{event.organizer.name}</h4>
+                        <h4 className="font-semibold">{currentEvent.organizer.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {event.organizer.events} events · {event.organizer.followers} followers
+                          Organizer
                       </p>
                     </div>
                   </div>
-                  <p className="text-muted-foreground text-sm mb-4">{event.organizer.description}</p>
+                    <p className="text-muted-foreground text-sm mb-4">{currentEvent.organizer.description || "No description available."}</p>
                   <div className="space-y-2">
+                      {currentEvent.organizer.website && (
                     <div className="flex items-center gap-2 text-sm">
                       <Globe className="h-4 w-4 text-muted-foreground" />
-                      <a href={event.organizer.website} className="text-primary hover:underline">
-                        {event.organizer.website.replace("https://", "")}
+                          <a href={currentEvent.organizer.website} className="text-primary hover:underline">
+                            {currentEvent.organizer.website.replace(/^https?:\/\//, "")}
                       </a>
                     </div>
+                      )}
+                      {currentEvent.organizer.email && (
                     <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${event.organizer.email}`} className="hover:underline">
-                        {event.organizer.email}
+                          <a href={`mailto:${currentEvent.organizer.email}`} className="hover:underline">
+                            {currentEvent.organizer.email}
                       </a>
                     </div>
+                      )}
+                      {currentEvent.organizer.phone && (
                     <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${event.organizer.phone}`} className="hover:underline">
-                        {event.organizer.phone}
+                          <a href={`tel:${currentEvent.organizer.phone}`} className="hover:underline">
+                            {currentEvent.organizer.phone}
                       </a>
-                    </div>
+                        </div>
+                      )}
                   </div>
                   <div className="mt-6 flex gap-2">
                     <Button variant="outline" className="w-full">
@@ -486,6 +409,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               {/* Event Stats */}
               <Card>
@@ -493,23 +417,25 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                   <h3 className="text-xl font-bold mb-4">Event Stats</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-muted p-4 rounded-lg text-center">
-                      <div className="text-3xl font-bold text-primary">{event.attendees}</div>
+                      <div className="text-3xl font-bold text-primary">{currentEvent.attendees || 0}</div>
                       <div className="text-sm text-muted-foreground">Attending</div>
                     </div>
                     <div className="bg-muted p-4 rounded-lg text-center">
                       <div className="text-3xl font-bold text-primary">
-                        {Math.round((event.attendees / event.maxAttendees) * 100)}%
+                        {currentEvent.capacity && currentEvent.attendees
+                          ? Math.round((currentEvent.attendees / currentEvent.capacity) * 100)
+                          : 0}%
                       </div>
                       <div className="text-sm text-muted-foreground">Capacity</div>
                     </div>
                     <div className="bg-muted p-4 rounded-lg text-center">
                       <div className="text-3xl font-bold text-primary">
-                        {Math.floor((new Date(event.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+                        {Math.max(0, Math.floor((new Date(currentEvent.startDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))}
                       </div>
                       <div className="text-sm text-muted-foreground">Days Left</div>
                     </div>
                     <div className="bg-muted p-4 rounded-lg text-center">
-                      <div className="text-3xl font-bold text-primary">{event.ticketTypes.length}</div>
+                      <div className="text-3xl font-bold text-primary">{currentEvent.ticketTypes?.length || 0}</div>
                       <div className="text-sm text-muted-foreground">Ticket Types</div>
                     </div>
                   </div>
@@ -519,9 +445,9 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
               {/* More from this organizer */}
               {organizerOtherEvents.length > 0 && (
                 <div>
-                  <h3 className="text-xl font-bold mb-4">More from {event.organizer.name}</h3>
+                  <h3 className="text-xl font-bold mb-4">More from {currentEvent.organizer?.name}</h3>
                   <div className="space-y-4">
-                    {organizerOtherEvents.map((otherEvent) => (
+                    {organizerOtherEvents.map((otherEvent: RelatedEventType) => (
                       <Link key={otherEvent.id} href={`/events/${otherEvent.id}`}>
                         <Card className="hover:border-primary/20 transition-colors">
                           <CardContent className="p-4">
@@ -536,19 +462,25 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                               </div>
                               <div>
                                 <h4 className="font-semibold line-clamp-1">{otherEvent.title}</h4>
-                                <p className="text-sm text-muted-foreground">{otherEvent.date}</p>
-                                <p className="text-sm text-primary mt-1">{otherEvent.price}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(otherEvent.date).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm text-primary mt-1">
+                                  {otherEvent.price ? `ETB ${otherEvent.price}` : "Free"}
+                                </p>
                               </div>
                             </div>
                           </CardContent>
                         </Card>
                       </Link>
                     ))}
+                    {currentEvent.organizer?.name && (
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href={`/organizers/${event.organizer.name.toLowerCase().replace(/\s+/g, "-")}`}>
+                        <Link href={`/organizers/${currentEvent.organizer.name.toLowerCase().replace(/\s+/g, "-")}`}>
                         View All Events
                       </Link>
                     </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -556,6 +488,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
           </div>
 
           {/* Related Events */}
+          {relatedEvents.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Similar Events You Might Like</h2>
@@ -564,7 +497,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedEvents.map((relEvent) => (
+                {relatedEvents.map((relEvent: RelatedEventType) => (
                 <Link key={relEvent.id} href={`/events/${relEvent.id}`}>
                   <Card className="group overflow-hidden border hover:border-primary/20 transition-colors">
                     <div className="aspect-[16/9] relative overflow-hidden">
@@ -586,7 +519,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                         <div className="flex items-center">
                           <CalendarDays className="h-4 w-4 mr-2 text-primary/70" />
                           <span>
-                            {relEvent.date} • {relEvent.time}
+                              {new Date(relEvent.date).toLocaleDateString()} • {relEvent.time || "All day"}
                           </span>
                         </div>
                         <div className="flex items-center">
@@ -595,12 +528,12 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                         </div>
                         <div className="flex items-center">
                           <Users className="h-4 w-4 mr-2 text-primary/70" />
-                          <span>{relEvent.attendees} attendees</span>
-                        </div>
+                            <span>{relEvent.attendees || 0} attendees</span>
+                          </div>
                       </div>
                       <div className="flex justify-between items-center mt-4">
                         <div>
-                          <span className="font-semibold">{relEvent.price}</span>
+                            <span className="font-semibold">{relEvent.price ? `ETB ${relEvent.price}` : "Free"}</span>
                         </div>
                         <Button className="text-xs" variant="outline">
                           View Details
@@ -612,6 +545,7 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
               ))}
             </div>
           </div>
+          )}
         </div>
       </main>
       <SiteFooter />

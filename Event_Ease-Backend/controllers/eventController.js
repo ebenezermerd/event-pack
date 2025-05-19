@@ -13,6 +13,7 @@ const Promotion = require("../models/promotion")
 const UserEventInteraction = require("../models/userEventInteraction")
 const { getPagination, getPagingData } = require("../utils/pagination")
 const sequelize = require("../config/database")
+const EventRelationship = require("../models/eventRelationship")
 
 // Get Events
 exports.getEvents = async (req, res) => {
@@ -159,6 +160,23 @@ exports.getEventById = async (req, res) => {
           model: EventFAQ,
           attributes: ["question", "answer"],
         },
+        {
+          model: EventRelationship,
+          as: 'RelatedEvents',
+          include: [{
+            model: Event,
+            as: 'RelatedEvent',
+            where: { approvalStatus: "approved" },
+            include: [{
+              model: Organizer,
+              attributes: ["userId", "companyName", "logo"],
+              include: [{
+                model: User,
+                attributes: ["name"],
+              }],
+            }],
+          }],
+        },
       ],
     })
 
@@ -180,22 +198,32 @@ exports.getEventById = async (req, res) => {
       })
     }
 
+    // Format date and time for better display
+    const eventDate = new Date(event.eventDate)
+    const formattedDate = eventDate.toISOString().split('T')[0] // YYYY-MM-DD format
+
     // Format event
     const formattedEvent = {
       id: event.id,
       title: event.title,
       description: event.description,
       longDescription: event.longDescription,
-      date: event.eventDate,
+      date: formattedDate,
+      startDate: formattedDate, // For frontend compatibility
+      endDate: formattedDate, // For frontend compatibility
       time: event.time,
       location: event.location,
       address: event.address,
       price: event.price,
       category: event.category,
       image: event.image,
-      gallery: event.gallery,
+      gallery: event.gallery || [],
       attendees: event.attendees,
       maxAttendees: event.maxAttendees,
+      capacity: event.maxAttendees || 0, // For frontend compatibility
+      isPublic: true, // Assuming all viewable events are public
+      approvalStatus: event.approvalStatus,
+      isFree: !event.price || event.price === "0" || event.price === "Free",
       organizer: {
         id: event.Organizer.userId,
         name: event.Organizer.User.name,
@@ -212,7 +240,7 @@ exports.getEventById = async (req, res) => {
         description: ticketType.description,
         price: ticketType.price,
         available: ticketType.available,
-        benefits: ticketType.benefits,
+        benefits: ticketType.benefits || [],
         requirements: ticketType.requirements,
       })),
       schedule: event.EventSchedules.map((schedule) => ({
@@ -228,11 +256,94 @@ exports.getEventById = async (req, res) => {
       })),
     }
 
-    // Get related events
-    const relatedEvents = await Event.findAll({
+    // First, check if we have explicit relationships defined
+    let explicitRelatedEvents = [];
+    
+    if (event.RelatedEvents && event.RelatedEvents.length > 0) {
+      explicitRelatedEvents = event.RelatedEvents.map(relationship => {
+        const relatedEvent = relationship.RelatedEvent;
+        const relatedEventDate = new Date(relatedEvent.eventDate);
+        const relatedFormattedDate = relatedEventDate.toISOString().split('T')[0];
+        
+        return {
+          id: relatedEvent.id,
+          title: relatedEvent.title,
+          description: relatedEvent.description,
+          date: relatedFormattedDate,
+          time: relatedEvent.time,
+          location: relatedEvent.location,
+          price: relatedEvent.price,
+          category: relatedEvent.category,
+          image: relatedEvent.image,
+          attendees: relatedEvent.attendees,
+          relationshipType: relationship.relationshipType,
+          strength: relationship.strength,
+          organizer: {
+            id: relatedEvent.Organizer.userId,
+            name: relatedEvent.Organizer.User.name,
+            logo: relatedEvent.Organizer.logo,
+          },
+        };
+      });
+    }
+
+    // If we don't have enough explicit relationships, find more related events by category
+    let categoryRelatedEvents = [];
+    if (explicitRelatedEvents.length < 3) {
+      const relatedEvents = await Event.findAll({
+        where: {
+          id: { [Op.ne]: id },
+          category: event.category,
+          approvalStatus: "approved",
+          eventDate: { [Op.gte]: new Date() },
+        },
+        include: [
+          {
+            model: Organizer,
+            attributes: ["userId", "companyName", "logo"],
+            include: [
+              {
+                model: User,
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+        limit: 3,
+      });
+
+      // Format related events
+      categoryRelatedEvents = relatedEvents.map((relatedEvent) => {
+        const relatedEventDate = new Date(relatedEvent.eventDate);
+        const relatedFormattedDate = relatedEventDate.toISOString().split('T')[0];
+        
+        return {
+          id: relatedEvent.id,
+          title: relatedEvent.title,
+          description: relatedEvent.description,
+          date: relatedFormattedDate,
+          time: relatedEvent.time,
+          location: relatedEvent.location,
+          price: relatedEvent.price,
+          category: relatedEvent.category,
+          image: relatedEvent.image,
+          attendees: relatedEvent.attendees,
+          relationshipType: "category",
+          strength: 5,
+          organizer: {
+            id: relatedEvent.Organizer.userId,
+            name: relatedEvent.Organizer.User.name,
+            logo: relatedEvent.Organizer.logo,
+          },
+        };
+      });
+    }
+
+    // Get organizer's other events
+    const organizerOtherEvents = await Event.findAll({
       where: {
         id: { [Op.ne]: id },
-        category: event.category,
+        organizerId: event.organizerId,
         approvalStatus: "approved",
         eventDate: { [Op.gte]: new Date() },
       },
@@ -249,31 +360,83 @@ exports.getEventById = async (req, res) => {
         },
       ],
       limit: 3,
-    })
+    });
 
-    // Format related events
-    const formattedRelatedEvents = relatedEvents.map((relatedEvent) => ({
-      id: relatedEvent.id,
-      title: relatedEvent.title,
-      description: relatedEvent.description,
-      date: relatedEvent.eventDate,
-      time: relatedEvent.time,
-      location: relatedEvent.location,
-      price: relatedEvent.price,
-      category: relatedEvent.category,
-      image: relatedEvent.image,
-      organizer: {
-        id: relatedEvent.Organizer.userId,
-        name: relatedEvent.Organizer.User.name,
-        logo: relatedEvent.Organizer.logo,
-      },
-    }))
+    // Format organizer's other events
+    const formattedOrganizerEvents = organizerOtherEvents.map((otherEvent) => {
+      const otherEventDate = new Date(otherEvent.eventDate)
+      const otherFormattedDate = otherEventDate.toISOString().split('T')[0]
+      
+      return {
+        id: otherEvent.id,
+        title: otherEvent.title,
+        date: otherFormattedDate,
+        time: otherEvent.time,
+        location: otherEvent.location,
+        price: otherEvent.price,
+        category: otherEvent.category,
+        image: otherEvent.image,
+        relationshipType: "organizer",
+        strength: 8,
+        organizer: {
+          id: otherEvent.Organizer.userId,
+          name: otherEvent.Organizer.User.name,
+          logo: otherEvent.Organizer.logo,
+        },
+      }
+    });
+
+    // Combine all related events, prioritizing explicit relationships
+    const allRelatedEvents = [
+      ...explicitRelatedEvents,
+      ...categoryRelatedEvents.filter(
+        // Filter out duplicates that might already be in explicit relationships
+        (catEvent) => !explicitRelatedEvents.some((expEvent) => expEvent.id === catEvent.id)
+      ),
+      ...formattedOrganizerEvents.filter(
+        // Filter out duplicates that might already be in other lists
+        (orgEvent) => !explicitRelatedEvents.some((expEvent) => expEvent.id === orgEvent.id) &&
+                     !categoryRelatedEvents.some((catEvent) => catEvent.id === orgEvent.id)
+      )
+    ];
+
+    // Sort related events by strength and limit to a reasonable number
+    const sortedRelatedEvents = allRelatedEvents
+      .sort((a, b) => b.strength - a.strength)
+      .slice(0, 6);
+
+    // If there are any explicit relationships and this is a new event being viewed,
+    // create "reverse" relationships for better recommendations
+    if (explicitRelatedEvents.length > 0 && userId) {
+      // Auto-create relationships for events that don't already have them
+      for (const related of sortedRelatedEvents) {
+        // Check if a relationship already exists in the opposite direction
+        const existingRelationship = await EventRelationship.findOne({
+          where: {
+            eventId: related.id,
+            relatedEventId: id,
+          }
+        });
+
+        // If no relationship exists, create one
+        if (!existingRelationship) {
+          await EventRelationship.create({
+            id: uuidv4(),
+            eventId: related.id,
+            relatedEventId: id,
+            relationshipType: related.relationshipType,
+            strength: related.strength - 1, // Slightly weaker in reverse
+            createdBy: userId,
+          });
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
       event: formattedEvent,
-      relatedEvents: formattedRelatedEvents,
-    })
+      relatedEvents: sortedRelatedEvents,
+    });
   } catch (error) {
     console.error("Get event by ID error:", error)
     res.status(500).json({

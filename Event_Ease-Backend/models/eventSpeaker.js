@@ -1,10 +1,9 @@
-// models/eventSchedule.js
 const { DataTypes } = require("sequelize")
 const sequelize = require("../config/database")
 const Event = require("./event")
 
-const EventSchedule = sequelize.define(
-  "EventSchedule",
+const EventSpeaker = sequelize.define(
+  "EventSpeaker",
   {
     id: {
       type: DataTypes.UUID,
@@ -13,53 +12,46 @@ const EventSchedule = sequelize.define(
     },
     eventId: {
       type: DataTypes.UUID,
-      allowNull: false,
       references: {
         model: Event,
         key: "id",
       },
+      allowNull: false,
     },
-    time: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     title: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
-    description: {
+    bio: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    location: {
+    photoUrl: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    speaker: {
+    socialLinks: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
+    presentationTopic: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    day: {
-      type: DataTypes.INTEGER,
-      defaultValue: 1,
-      comment: "For multi-day events, indicates which day this schedule item is for"
-    },
-    order: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      comment: "Determines the display order of schedule items"
+    presentationTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
     }
   },
   {
     timestamps: true,
-    tableName: "event_schedules",
+    tableName: "event_speakers",
     charset: "utf8mb4",
     collate: "utf8mb4_general_ci",
-  }
+  },
 )
-
-// Establish association with Event model
-EventSchedule.belongsTo(Event, { foreignKey: "eventId" })
-Event.hasMany(EventSchedule, { foreignKey: "eventId" })
-
-module.exports = EventSchedule
+module.exports = EventSpeaker 
