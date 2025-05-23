@@ -22,6 +22,7 @@ const models = {
   SavedEvent: require('../models/savedEvent'),
   FileUpload: require('../models/fileUpload'),
   PaymentTransaction: require('../models/paymentTransaction'),
+  EventRelationship: require('../models/eventRelationship'),
 };
 
 // Create readline interface for user input
@@ -37,6 +38,39 @@ const askForConfirmation = () => {
       resolve(answer.toLowerCase() === 'yes' || answer.toLowerCase() === 'y');
     });
   });
+};
+
+// Function to drop all foreign key constraints
+const dropAllForeignKeys = async () => {
+  try {
+    // Get all tables in the database
+    const [tables] = await sequelize.query(`
+      SELECT TABLE_NAME 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_SCHEMA = '${sequelize.config.database}'
+    `);
+
+    // For each table, get and drop its foreign key constraints
+    for (const table of tables) {
+      const tableName = table.TABLE_NAME;
+      const [constraints] = await sequelize.query(`
+        SELECT CONSTRAINT_NAME
+        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+        WHERE TABLE_SCHEMA = '${sequelize.config.database}'
+        AND TABLE_NAME = '${tableName}'
+        AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+      `);
+
+      for (const constraint of constraints) {
+        const constraintName = constraint.CONSTRAINT_NAME;
+        await sequelize.query(`ALTER TABLE \`${tableName}\` DROP FOREIGN KEY \`${constraintName}\``);
+        console.log(`Dropped foreign key constraint ${constraintName} from ${tableName}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error dropping foreign key constraints:', error);
+    throw error;
+  }
 };
 
 // Main function to rebuild database
@@ -55,7 +89,11 @@ const rebuildDatabase = async () => {
 
     console.log('🚀 Starting database rebuild...');
     
-    // Drop all tables and recreate them
+    // First drop all foreign key constraints
+    console.log('🔄 Dropping all foreign key constraints...');
+    await dropAllForeignKeys();
+    
+    // Then drop all tables and recreate them
     console.log('🔄 Dropping all tables and recreating from model definitions...');
     await sequelize.sync({ force: true });
     

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { OrganizerRouteGuard } from "@/components/guards/organizer-route-guard"
+import OrganizerRouteGuard from "@/components/guards/organizer-route-guard"
 import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/components/ui/use-toast"
 

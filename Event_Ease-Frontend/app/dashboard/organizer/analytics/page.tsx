@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { BarChart, Calendar, Download, PieChart, TrendingUp, Users, Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { OrganizerRouteGuard } from "@/components/guards/organizer-route-guard"
+import OrganizerRouteGuard from "@/components/guards/organizer-route-guard"
 import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 

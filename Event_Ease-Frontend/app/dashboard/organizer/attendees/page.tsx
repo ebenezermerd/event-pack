@@ -21,7 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Clock, MapPin, Phone, User, CalendarIcon } from "lucide-react"
 import { useState, useEffect } from "react"
-import { OrganizerRouteGuard } from "@/components/guards/organizer-route-guard"
+import OrganizerRouteGuard from "@/components/guards/organizer-route-guard"
 import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 

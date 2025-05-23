@@ -22,7 +22,7 @@ import {
   TrendingUp,
   Download,
 } from "lucide-react"
-import { AdminRouteGuard } from "@/components/guards/admin-route-guard"
+import AdminRouteGuard from "@/components/guards/admin-route-guard"
 import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 

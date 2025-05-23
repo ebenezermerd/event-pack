@@ -9,13 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col ">
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 ">
         {/* Hero Section - Enhanced with better dark mode support */}
-        <section className="relative w-full overflow-hidden py-24 md:py-36">
+        <section className="relative w-full overflow-hidden  py-48 md:pt-24 ">
           {/* Background gradient - optimized for dark mode */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--hero-bg-from))] via-[hsl(var(--hero-bg-via))] to-[hsl(var(--hero-bg-to))] opacity-95 -z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--hero-bg-from))] via-[hsl(var(--hero-bg-via))]  to-[hsl(var(--hero-bg-to))] opacity-95 -z-10"></div>
 
           {/* Geometric background patterns */}
           <div className="absolute inset-0 -z-10 opacity-10">
@@ -37,7 +37,7 @@ export default function Home() {
           </div>
 
           {/* Circular images on right - enhanced with more sophisticated styling */}
-          <div className="absolute right-[5%] top-1/2 -translate-y-1/2 hidden lg:block z-10 w-[40%] max-w-[500px]">
+          <div className="absolute right-[5%] my-14 top-1/2 -translate-y-1/2 hidden lg:block z-10 w-[40%] max-w-[500px]">
             <div className="relative h-[600px]">
               <div className="absolute top-[-60px] right-[10%] w-64 h-64 rounded-full shadow-xl overflow-hidden animate-float-slow">
                 <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/30 to-transparent dark:from-cyan-500/20 rounded-full p-1.5">
@@ -81,7 +81,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="container px-4 md:px-6 relative z-10 min-h-[800px]">
+          <div className="container px-4 md:px-6 pt-24 relative z-10 min-h-[500px]">
             <div className="max-w-3xl">
               <p className="text-lg md:text-xl font-medium mb-3 text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-cyan-400 dark:to-blue-300 inline-block animate-shimmer-slow">
                 Find Your Next Experience
@@ -156,7 +156,7 @@ export default function Home() {
         </section>
 
         {/* Featured Events Section */}
-        <section className="py-16 bg-muted/40">
+        <section className="py-24 bg-muted/40">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center text-center mb-10">
               <h2 className="text-3xl font-bold tracking-tight mb-2">Featured Events</h2>

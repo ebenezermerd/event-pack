@@ -108,6 +108,7 @@ interface EventContextType {
   deleteEvent: (id: string) => Promise<boolean>
   bookEvent: (id: string) => Promise<boolean>
   cancelBooking: (id: string) => Promise<boolean>
+  fetchOrganizerEvents: () => Promise<void>
 
   // Event state
   isLoading: boolean
@@ -139,6 +140,7 @@ const EventContext = createContext<EventContextType>({
   deleteEvent: async () => false,
   bookEvent: async () => false,
   cancelBooking: async () => false,
+  fetchOrganizerEvents: async () => {},
 
   isLoading: false,
   error: null,
@@ -542,6 +544,7 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
     deleteEvent,
     bookEvent,
     cancelBooking,
+    fetchOrganizerEvents: fetchMyEvents,
 
     isLoading,
     error,

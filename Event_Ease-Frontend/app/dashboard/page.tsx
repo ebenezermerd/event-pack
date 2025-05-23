@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import ProtectedRoute from "@/components/protected-route"
+import { LoadingScreen } from "@/components/loading-screen"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -34,12 +35,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Redirecting to your dashboard...</p>
-        </div>
-      </div>
+         <LoadingScreen loadingText="Redirecting to your dashboard..." />
     </ProtectedRoute>
   )
 }

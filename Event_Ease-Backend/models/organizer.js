@@ -54,6 +54,38 @@ const Organizer = sequelize.define(
     verificationDocuments: {
       type: DataTypes.JSON,
       allowNull: true,
+      get() {
+        const value = this.getDataValue('verificationDocuments');
+        if (value === null) return [];
+        if (Array.isArray(value)) return value;
+        try {
+          // If stored as JSON string, parse it
+          return typeof value === 'string' ? JSON.parse(value) : value;
+        } catch (e) {
+          console.error('Error parsing verificationDocuments:', e);
+          return [];
+        }
+      },
+      set(value) {
+        // Ensure we store as proper JSON
+        if (value === null || value === undefined) {
+          this.setDataValue('verificationDocuments', null);
+        } else if (Array.isArray(value)) {
+          this.setDataValue('verificationDocuments', value);
+        } else if (typeof value === 'string') {
+          try {
+            // Check if it's a JSON string
+            const parsed = JSON.parse(value);
+            this.setDataValue('verificationDocuments', parsed);
+          } catch (e) {
+            // Not a JSON string, store as an array with one item
+            this.setDataValue('verificationDocuments', [value]);
+          }
+        } else {
+          // Unknown format, store as empty array
+          this.setDataValue('verificationDocuments', []);
+        }
+      }
     },
     followers: {
       type: Sequelize.INTEGER,

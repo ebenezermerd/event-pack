@@ -16,7 +16,7 @@ import { AIEventActions } from "@/components/ai/ai-event-actions"
 import { AIGenerationProvider } from "@/contexts/AIGenerationContext"
 
 export default function OrganizerEventsPage() {
-  const { events, isLoading, fetchOrganizerEvents } = useEvents()
+  const { events, isLoading, fetchEvents } = useEvents()
   const { isAuthenticated, role } = useAuth()
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -24,9 +24,9 @@ export default function OrganizerEventsPage() {
 
   useEffect(() => {
     if (isAuthenticated && role === "organizer") {
-      fetchOrganizerEvents()
+      fetchEvents()
     }
-  }, [isAuthenticated, role, fetchOrganizerEvents])
+  }, [isAuthenticated, role, fetchEvents])
 
   // Filter events based on active tab, search query, and status filter
   const filteredEvents = events.filter((event) => {

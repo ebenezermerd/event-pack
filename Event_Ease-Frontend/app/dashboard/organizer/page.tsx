@@ -27,7 +27,7 @@ export default function OrganizerDashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Events</CardTitle>
               <Calendar className="h-4 w-4 text-primary-600" />
@@ -41,7 +41,7 @@ export default function OrganizerDashboardPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Attendees</CardTitle>
               <Users className="h-4 w-4 text-primary-600" />
@@ -55,7 +55,7 @@ export default function OrganizerDashboardPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-primary-600" />
@@ -69,7 +69,7 @@ export default function OrganizerDashboardPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
               <CalendarDays className="h-4 w-4 text-primary-600" />
@@ -82,7 +82,7 @@ export default function OrganizerDashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-7">
-          <Card className="md:col-span-4 border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="md:col-span-4 border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex justify-between items-center">
               <div>
                 <CardTitle>Revenue Overview</CardTitle>
@@ -99,7 +99,7 @@ export default function OrganizerDashboardPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="md:col-span-3 border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="md:col-span-3 border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex justify-between items-center">
               <div>
                 <CardTitle>Upcoming Events</CardTitle>
@@ -143,7 +143,7 @@ export default function OrganizerDashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Card className="border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex justify-between items-center">
               <div>
                 <CardTitle>Recent Ticket Sales</CardTitle>
@@ -197,7 +197,7 @@ export default function OrganizerDashboardPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-2 border-transparent hover:border-primary-200 transition-colors">
+          <Card className="border-2 hover:border-primary-200 transition-colors">
             <CardHeader className="flex justify-between items-center">
               <div>
                 <CardTitle>Event Approval Status</CardTitle>

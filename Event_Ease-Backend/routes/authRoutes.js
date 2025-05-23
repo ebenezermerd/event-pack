@@ -20,6 +20,9 @@ router.post("/refresh-token", validate(refreshTokenSchema), authController.refre
 router.post("/user/login", validate(loginSchema), authController.login)
 router.post("/organizer/login", validate(loginSchema), authController.login)
 router.post("/admin/login", validate(loginSchema), authController.login)
+// Admin profile route
+router.get("/admin/me", userAuth, authController.getAdminProfile)
+
 
 // Role-specific register routes to match frontend expectations
 router.post("/user/register", validate(registerSchema), authController.register)

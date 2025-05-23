@@ -8,6 +8,7 @@ import { EventProvider } from "@/contexts/EventContext"
 import { CategoryProvider } from "@/contexts/CategoryContext"
 import { LocationProvider } from "@/contexts/LocationContext"
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/env"
+import { ThemeProvider } from "@/components/theme-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,18 +25,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <CategoryProvider>
-            <LocationProvider>
-              <EventProvider>
-                <div className="relative flex min-h-screen flex-col">
-                  <div className="flex-1">{children}</div>
-                </div>
-                <Toaster />
-              </EventProvider>
-            </LocationProvider>
-          </CategoryProvider>
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <CategoryProvider>
+              <LocationProvider>
+                <EventProvider>
+                  <div className="relative flex min-h-screen flex-col">
+                    <div className="flex-1">{children}</div>
+                  </div>
+                  <Toaster />
+                </EventProvider>
+              </LocationProvider>
+            </CategoryProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

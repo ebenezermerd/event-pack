@@ -31,6 +31,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
+import { apiClient, handleApiError } from "@/lib/api-client"
+import OrganizerRouteGuard from "@/components/guards/organizer-route-guard"
+import React from "react"
 
 interface Order {
   id: string
@@ -68,24 +71,34 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+  
+  // Form state for refund and export
+  const [refundReason, setRefundReason] = useState("customerRequest")
+  const [sendNotification, setSendNotification] = useState(true)
+  const [exportFormat, setExportFormat] = useState("csv")
+  const [dateRange, setDateRange] = useState("all")
+  const [includeFields, setIncludeFields] = useState({
+    id: true,
+    customer: true,
+    event: true,
+    tickets: true,
+    payment: true,
+    status: true,
+  })
 
   useEffect(() => {
     const fetchOrders = async () => {
       setIsLoading(true)
       setError(null)
       try {
-        const response = await fetch("/api/organizer/orders")
-        if (!response.ok) {
-          throw new Error("Failed to fetch orders")
-        }
-        const data = await response.json()
+        const data = await apiClient.get("/api/organizer/orders")
         setOrders(data.orders)
       } catch (err) {
         console.error("Error fetching orders:", err)
-        setError("Failed to load orders. Please try again later.")
+        setError(handleApiError(err))
         toast({
           title: "Error",
-          description: "Failed to load orders. Please try again later.",
+          description: handleApiError(err),
           variant: "destructive",
         })
       } finally {
@@ -98,13 +111,7 @@ export default function OrdersPage() {
 
   const handleMarkAsPaid = async (orderId: string) => {
     try {
-      const response = await fetch(`/api/organizer/orders/${orderId}/mark-paid`, {
-        method: "PUT",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to update order status")
-      }
+      const data = await apiClient.put(`/api/organizer/orders/${orderId}/mark-paid`, {})
 
       // Update local state
       setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: "completed" } : order)))
@@ -118,7 +125,7 @@ export default function OrdersPage() {
       console.error("Error updating order:", err)
       toast({
         title: "Error",
-        description: "Failed to update order status",
+        description: handleApiError(err),
         variant: "destructive",
       })
     }
@@ -126,13 +133,7 @@ export default function OrdersPage() {
 
   const handleCancelOrder = async (orderId: string) => {
     try {
-      const response = await fetch(`/api/organizer/orders/${orderId}/cancel`, {
-        method: "PUT",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to cancel order")
-      }
+      const data = await apiClient.put(`/api/organizer/orders/${orderId}/cancel`, {})
 
       // Update local state
       setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: "cancelled" } : order)))
@@ -146,7 +147,7 @@ export default function OrdersPage() {
       console.error("Error cancelling order:", err)
       toast({
         title: "Error",
-        description: "Failed to cancel order",
+        description: handleApiError(err),
         variant: "destructive",
       })
     }
@@ -156,20 +157,10 @@ export default function OrdersPage() {
     if (!selectedOrder) return
 
     try {
-      const response = await fetch(`/api/organizer/orders/${selectedOrder.id}/refund`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reason: document.querySelector<HTMLSelectElement>("#refundReason")?.value,
-          sendNotification: document.querySelector<HTMLInputElement>("#sendNotification")?.checked,
-        }),
+      const data = await apiClient.post(`/api/organizer/orders/${selectedOrder.id}/refund`, {
+        reason: refundReason,
+        sendNotification,
       })
-
-      if (!response.ok) {
-        throw new Error("Failed to process refund")
-      }
 
       // Update local state
       setOrders(orders.map((order) => (order.id === selectedOrder.id ? { ...order, status: "refunded" } : order)))
@@ -186,7 +177,7 @@ export default function OrdersPage() {
       console.error("Error processing refund:", err)
       toast({
         title: "Error",
-        description: "Failed to process refund",
+        description: handleApiError(err),
         variant: "destructive",
       })
     }
@@ -194,39 +185,19 @@ export default function OrdersPage() {
 
   const handleExportOrders = async () => {
     try {
-      const format = document.querySelector<HTMLSelectElement>("#exportFormat")?.value
-      const dateRange = document.querySelector<HTMLSelectElement>("#dateRange")?.value
-
-      const response = await fetch("/api/organizer/orders/export", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          format,
-          dateRange,
-          orderIds: selectedRows.length > 0 ? selectedRows : undefined,
-          includeFields: {
-            id: document.querySelector<HTMLInputElement>("#include-id")?.checked,
-            customer: document.querySelector<HTMLInputElement>("#include-customer")?.checked,
-            event: document.querySelector<HTMLInputElement>("#include-event")?.checked,
-            tickets: document.querySelector<HTMLInputElement>("#include-tickets")?.checked,
-            payment: document.querySelector<HTMLInputElement>("#include-payment")?.checked,
-            status: document.querySelector<HTMLInputElement>("#include-status")?.checked,
-          },
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to export orders")
-      }
+      const response = await apiClient.post("/api/organizer/orders/export", {
+        format: exportFormat,
+        dateRange,
+        orderIds: selectedRows.length > 0 ? selectedRows : undefined,
+        includeFields,
+      }, { responseType: 'blob' })
 
       // Handle file download
-      const blob = await response.blob()
+      const blob = new Blob([response], { type: exportFormat === 'csv' ? 'text/csv' : exportFormat === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/pdf' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `orders-export-${new Date().toISOString().split("T")[0]}.${format}`
+      a.download = `orders-export-${new Date().toISOString().split("T")[0]}.${exportFormat}`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -241,7 +212,7 @@ export default function OrdersPage() {
       console.error("Error exporting orders:", err)
       toast({
         title: "Error",
-        description: "Failed to export orders",
+        description: handleApiError(err),
         variant: "destructive",
       })
     }
@@ -428,6 +399,7 @@ export default function OrdersPage() {
   }
 
   return (
+    <OrganizerRouteGuard>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between pb-4">
         <div>
@@ -1096,8 +1068,8 @@ export default function OrdersPage() {
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium">Refund Details</h4>
                     <div className="grid gap-2">
-                      <Label htmlFor="refundReason">Reason for Refund</Label>
-                      <Select defaultValue="customerRequest" id="refundReason">
+                      <Label htmlFor="refund-reason">Reason for Refund</Label>
+                      <Select value={refundReason} onValueChange={setRefundReason}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a reason" />
                         </SelectTrigger>
@@ -1113,9 +1085,13 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="sendNotification" defaultChecked />
+                      <Checkbox 
+                        id="send-notification" 
+                        checked={sendNotification} 
+                        onCheckedChange={(checked) => setSendNotification(!!checked)} 
+                      />
                       <label
-                        htmlFor="sendNotification"
+                        htmlFor="send-notification"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
                         Notify customer of refund status via email
@@ -1162,10 +1138,10 @@ export default function OrdersPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="exportFormat" className="text-right">
+              <Label htmlFor="export-format" className="text-right">
                 Format
               </Label>
-              <Select defaultValue="csv" id="exportFormat">
+              <Select value={exportFormat} onValueChange={setExportFormat}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select a format" />
                 </SelectTrigger>
@@ -1177,10 +1153,10 @@ export default function OrdersPage() {
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dateRange" className="text-right">
+              <Label htmlFor="date-range" className="text-right">
                 Date Range
               </Label>
-              <Select defaultValue="all" id="dateRange">
+              <Select value={dateRange} onValueChange={setDateRange}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select date range" />
                 </SelectTrigger>
@@ -1200,7 +1176,13 @@ export default function OrdersPage() {
               <h4 className="text-sm font-medium">Include Fields</h4>
               <div className="grid grid-cols-2 gap-y-2">
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-id" defaultChecked />
+                  <Checkbox 
+                    id="include-id" 
+                    checked={includeFields.id} 
+                    onCheckedChange={(checked) => 
+                      setIncludeFields(prev => ({ ...prev, id: !!checked }))
+                    } 
+                  />
                   <label
                     htmlFor="include-id"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -1209,7 +1191,13 @@ export default function OrdersPage() {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-customer" defaultChecked />
+                  <Checkbox 
+                    id="include-customer" 
+                    checked={includeFields.customer} 
+                    onCheckedChange={(checked) => 
+                      setIncludeFields(prev => ({ ...prev, customer: !!checked }))
+                    } 
+                  />
                   <label
                     htmlFor="include-customer"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -1218,7 +1206,13 @@ export default function OrdersPage() {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-event" defaultChecked />
+                  <Checkbox 
+                    id="include-event" 
+                    checked={includeFields.event} 
+                    onCheckedChange={(checked) => 
+                      setIncludeFields(prev => ({ ...prev, event: !!checked }))
+                    } 
+                  />
                   <label
                     htmlFor="include-event"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -1227,7 +1221,13 @@ export default function OrdersPage() {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-tickets" defaultChecked />
+                  <Checkbox 
+                    id="include-tickets" 
+                    checked={includeFields.tickets} 
+                    onCheckedChange={(checked) => 
+                      setIncludeFields(prev => ({ ...prev, tickets: !!checked }))
+                    } 
+                  />
                   <label
                     htmlFor="include-tickets"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -1236,7 +1236,13 @@ export default function OrdersPage() {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-payment" defaultChecked />
+                  <Checkbox 
+                    id="include-payment" 
+                    checked={includeFields.payment} 
+                    onCheckedChange={(checked) => 
+                      setIncludeFields(prev => ({ ...prev, payment: !!checked }))
+                    } 
+                  />
                   <label
                     htmlFor="include-payment"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -1245,7 +1251,13 @@ export default function OrdersPage() {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-status" defaultChecked />
+                  <Checkbox 
+                    id="include-status" 
+                    checked={includeFields.status} 
+                    onCheckedChange={(checked) => 
+                      setIncludeFields(prev => ({ ...prev, status: !!checked }))
+                    } 
+                  />
                   <label
                     htmlFor="include-status"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -1267,5 +1279,6 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </OrganizerRouteGuard>
   )
 }

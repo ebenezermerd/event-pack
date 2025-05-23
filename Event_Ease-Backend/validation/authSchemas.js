@@ -8,6 +8,24 @@ const registerSchema = Joi.object({
   password: Joi.string().min(6).required(),
   phone: Joi.string().optional(),
   role: Joi.string().valid("admin", "organizer", "attendee").default("attendee"),
+  
+  // Organizer specific fields (only required when role is organizer)
+  companyName: Joi.when('role', {
+    is: 'organizer',
+    then: Joi.string().required(),
+    otherwise: Joi.string().optional()
+  }),
+  description: Joi.string().optional(),
+  logo: Joi.string().optional(),
+  website: Joi.string().optional(),
+  address: Joi.string().optional(),
+  region: Joi.string().optional(),
+  tinNumber: Joi.when('role', {
+    is: 'organizer',
+    then: Joi.string().required(),
+    otherwise: Joi.string().optional()
+  }),
+  verificationDocuments: Joi.array().items(Joi.string()).optional(),
 })
 
 // Login schema

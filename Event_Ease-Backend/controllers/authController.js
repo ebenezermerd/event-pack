@@ -1,8 +1,10 @@
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const User = require("../models/user")
+const Organizer = require("../models/organizer")
 const config = require("../config/config")
 const { Op } = require("sequelize")
+const { v4: uuidv4 } = require("uuid")
 
 // User Registration
 exports.register = async (req, res) => {
@@ -13,7 +15,25 @@ exports.register = async (req, res) => {
       password,
       phone,
       role,
+      // Organizer specific fields
+      companyName,
+      description,
+      logo,
+      website,
+      address,
+      region,
+      tinNumber,
+      verificationDocuments
     } = req.body
+
+    // Log the registration request for debugging
+    console.log("Registration request:", {
+      path: req.path,
+      role,
+      hasCompanyName: !!companyName,
+      hasTinNumber: !!tinNumber,
+      hasVerificationDocs: Array.isArray(verificationDocuments) && verificationDocuments.length > 0
+    });
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } })
@@ -40,6 +60,7 @@ exports.register = async (req, res) => {
 
     // Create user
     const user = await User.create({
+      id: uuidv4(), // Ensure we use UUID for the user ID
       name,
       email,
       password: hashedPassword,
@@ -49,6 +70,90 @@ exports.register = async (req, res) => {
       joinDate: new Date(),
       emailVerified: false,
     })
+
+    // If the user is registering as an organizer, create an organizer profile
+    let organizerData = null;
+    if (dbRole === 'organizer') {
+      // Check if required organizer fields are provided
+      if (!companyName || !tinNumber) {
+        console.warn(`User ${user.id} registered as organizer but missing required organizer fields. Company Name: ${companyName}, TIN: ${tinNumber}`);
+        return res.status(400).json({
+          success: false,
+          message: "Organizer registration requires companyName and tinNumber",
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          }
+        });
+      } else {
+        try {
+          // Check if TIN number is already used
+          const organizerWithTin = await Organizer.findOne({
+            where: { tinNumber },
+          })
+
+          if (organizerWithTin) {
+            // TIN already in use
+            console.warn(`TIN number ${tinNumber} is already registered`);
+            return res.status(400).json({
+              success: false,
+              message: `TIN number ${tinNumber} is already registered with another organizer`,
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+              }
+            });
+          } else {
+            // Create organizer profile
+            console.log("Creating organizer profile with data:", {
+              userId: user.id,
+              companyName,
+              tinNumber,
+              verificationDocuments: Array.isArray(verificationDocuments) ? 
+                `${verificationDocuments.length} documents` : 
+                (verificationDocuments ? 'present but not in array format' : 'not provided')
+            });
+            
+            const organizer = await Organizer.create({
+              userId: user.id,
+              companyName,
+              description: description || null,
+              logo: logo || null,
+              website: website || null,
+              address: address || null,
+              region: region || null,
+              tinNumber,
+              verificationDocuments: verificationDocuments || null,
+              approvalStatus: "pending",
+            })
+            
+            organizerData = {
+              companyName: organizer.companyName,
+              approvalStatus: organizer.approvalStatus,
+              tinNumber: organizer.tinNumber
+            };
+            
+            console.log("Organizer profile created successfully:", organizerData);
+          }
+        } catch (organizerError) {
+          console.error("Error creating organizer profile:", organizerError);
+          return res.status(500).json({
+            success: false,
+            message: "User created but failed to create organizer profile: " + organizerError.message,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+            }
+          });
+        }
+      }
+    }
 
     // Generate JWT token
     const token = jwt.sign(
@@ -66,6 +171,7 @@ exports.register = async (req, res) => {
         email: user.email,
         role: user.role,
       },
+      organizer: organizerData,
       token,
     })
   } catch (error) {
@@ -148,32 +254,84 @@ exports.logout = async (req, res) => {
   })
 }
 
-// Get Current User
+/**
+ * Get the current user's profile based on their role
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 exports.getCurrentUser = async (req, res) => {
   try {
-    const userId = req.user.id
-
-    const user = await User.findByPk(userId, {
-      attributes: { exclude: ["password"] },
-    })
-
+    const user = await User.findById(req.user.id).select("-password")
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      })
+      return res.status(404).json({ message: "User not found" })
     }
-
-    res.status(200).json({
-      success: true,
-      user,
-    })
+    
+    res.json({ user })
   } catch (error) {
-    console.error("Get current user error:", error)
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    })
+    console.error("Error fetching current user:", error)
+    res.status(500).json({ message: "Server error" })
+  }
+}
+
+/**
+ * Get the current user's profile (specifically for attendees)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password")
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+    
+    res.json({ user })
+  } catch (error) {
+    console.error("Error fetching user profile:", error)
+    res.status(500).json({ message: "Server error" })
+  }
+}
+
+/**
+ * Get the current organizer's profile
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getOrganizerProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password")
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+    
+    const organizer = await Organizer.findOne({ userId: req.user.id }).populate('userId', '-password')
+    if (!organizer) {
+      return res.status(404).json({ message: "Organizer profile not found" })
+    }
+    
+    res.json({ organizer })
+  } catch (error) {
+    console.error("Error fetching organizer profile:", error)
+    res.status(500).json({ message: "Server error" })
+  }
+}
+
+/**
+ * Get the current admin's profile
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getAdminProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password")
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+    
+    res.json({ user })
+  } catch (error) {
+    console.error("Error fetching admin profile:", error)
+    res.status(500).json({ message: "Server error" })
   }
 }
 
@@ -339,6 +497,79 @@ exports.refreshToken = async (req, res) => {
     })
   } catch (error) {
     console.error("Refresh token error:", error)
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    })
+  }
+}
+
+/**
+ * Special login handler for admin users via the secret admin login page
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    // Find user by email
+    const user = await User.findOne({ where: { email } })
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+    }
+
+    // Check if user is an admin
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin privileges required.",
+      })
+    }
+
+    // Check if user is active
+    if (user.status !== "active") {
+      return res.status(403).json({
+        success: false,
+        message: "Account is not active",
+      })
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      })
+    }
+
+    // Update last login
+    await user.update({ lastLogin: new Date() })
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET || 'your-jwt-secret',
+      { expiresIn: "1d" }
+    )
+
+    res.status(200).json({
+      success: true,
+      message: "Admin login successful",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    })
+  } catch (error) {
+    console.error("Admin login error:", error)
     res.status(500).json({
       success: false,
       message: error.message,

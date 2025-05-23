@@ -6,16 +6,23 @@ import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Logo } from "@/components/logo"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function SiteHeader() {
   const pathname = usePathname()
   const isDashboard = pathname?.startsWith("/dashboard")
+  const { isAuthenticated, role, logout } = useAuth()
 
   const navItems = [
     { href: "/events", label: "Browse Events" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ]
+
+  // Add My Events link for authenticated attendees
+  if (isAuthenticated && role === "attendee") {
+    navItems.push({ href: "/my-events", label: "My Events" })
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -42,7 +49,7 @@ export function SiteHeader() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center">
             <ModeToggle />
-            {!isDashboard && (
+            {!isAuthenticated && (
               <>
                 <Link href="/login" className="ml-4">
                   <Button variant="ghost" className="text-sm">
@@ -56,12 +63,17 @@ export function SiteHeader() {
                 </Link>
               </>
             )}
-            {isDashboard && (
-              <Link href="/dashboard" className="ml-4">
+            {isAuthenticated && (role === "admin" || role === "organizer") && (
+              <Link href={role === "admin" ? "/dashboard/admin" : "/dashboard/organizer"} className="ml-4">
                 <Button variant="outline" className="text-sm">
                   Dashboard
                 </Button>
               </Link>
+            )}
+            {isAuthenticated && (
+              <Button variant="ghost" onClick={logout} className="ml-4 text-sm">
+                Sign Out
+              </Button>
             )}
           </nav>
         </div>

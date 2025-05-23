@@ -24,12 +24,12 @@ import {
   ChevronLeft,
   ChevronRight,
   ShoppingCart,
+  Bookmark,
+  Sparkles
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
-// This would come from authentication in a real app
-type UserRole = "admin" | "organizer" | "attendee"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface DashboardSidebarProps {
   collapsed?: boolean
@@ -45,22 +45,12 @@ export function DashboardSidebar({
   onMobileOpenChange,
 }: DashboardSidebarProps) {
   const pathname = usePathname()
-  const [userRole, setUserRole] = useState<UserRole>("organizer")
+  const { role: userRole } = useAuth()
   const [internalCollapsed, setInternalCollapsed] = useState(false)
 
   // Use either controlled or uncontrolled state
   const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed
   const isMobileMenuOpen = mobileOpen !== undefined ? mobileOpen : false
-
-  // For demo purposes, allow switching roles
-  useEffect(() => {
-    // Check if we're in the admin section
-    if (pathname?.includes("/dashboard/admin")) {
-      setUserRole("admin")
-    } else if (pathname?.includes("/dashboard/organizer")) {
-      setUserRole("organizer")
-    }
-  }, [pathname])
 
   const isActive = (href: string) => {
     return pathname === href || pathname?.startsWith(href)
@@ -157,7 +147,11 @@ export function DashboardSidebar({
           <div className="flex-1 overflow-y-auto py-4 px-4">
             <div className="space-y-6">
               <NavSection title="Overview">
-                <NavItem href="/dashboard" icon={Home} active={isActive("/dashboard")}>
+                <NavItem 
+                  href={`/dashboard${userRole === "admin" ? "/admin" : userRole === "attendee" ? "/attendee" : "/organizer"}`} 
+                  icon={Home} 
+                  active={pathname === "/dashboard" || pathname === `/dashboard/${userRole}`}
+                >
                   Dashboard
                 </NavItem>
               </NavSection>
@@ -266,6 +260,35 @@ export function DashboardSidebar({
                       active={isActive("/dashboard/organizer/past-events")}
                     >
                       Past Events
+                    </NavItem>
+                  </NavSection>
+                </>
+              )}
+
+              {/* Attendee-specific menu items */}
+              {userRole === "attendee" && (
+                <>
+                  <NavSection title="My Activities">
+                    <NavItem
+                      href="/dashboard/attendee/tickets"
+                      icon={Ticket}
+                      active={isActive("/dashboard/attendee/tickets")}
+                    >
+                      My Tickets
+                    </NavItem>
+                    <NavItem
+                      href="/dashboard/attendee/saved-events"
+                      icon={Bookmark}
+                      active={isActive("/dashboard/attendee/saved-events")}
+                    >
+                      Saved Events
+                    </NavItem>
+                    <NavItem
+                      href="/dashboard/attendee/recommendations"
+                      icon={Sparkles}
+                      active={isActive("/dashboard/attendee/recommendations")}
+                    >
+                      For You
                     </NavItem>
                   </NavSection>
                 </>

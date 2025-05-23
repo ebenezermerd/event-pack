@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { CalendarDays, Users, MapPin, Filter, Loader2 } from "lucide-react"
@@ -15,10 +16,12 @@ import { AdvancedPagination } from "@/components/advanced-pagination"
 import { useEvents } from "@/contexts/EventContext"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export default function EventsPage({ searchParams }: { searchParams: { page?: string; size?: string } }) {
+export default function EventsPage() {
+  const searchParams = useSearchParams()
+  
   // Parse query parameters with defaults
-  const currentPage = Number(searchParams.page) || 1
-  const pageSize = Number(searchParams.size) || 6
+  const currentPage = Number(searchParams?.get('page') || '1')
+  const pageSize = Number(searchParams?.get('size') || '6')
 
   const { events, fetchEvents, isLoading, error, filters, setFilters, totalPages, setCurrentPage } = useEvents()
 
@@ -125,7 +128,7 @@ export default function EventsPage({ searchParams }: { searchParams: { page?: st
                     />
                     <Badge className="absolute top-3 right-3 bg-primary/80 hover:bg-primary">{event.category}</Badge>
                   </div>
-                  <CardContent className="p-5">
+                  <CardContent className="p-4">
                     <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
                       {event.title}
                     </h3>

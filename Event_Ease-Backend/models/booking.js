@@ -8,12 +8,12 @@ const Booking = sequelize.define(
   "Booking",
   {
     id: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
-      autoIncrement: true,
     },
     userId: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.UUID,
       references: {
         model: User,
         key: "id",
@@ -21,7 +21,7 @@ const Booking = sequelize.define(
       allowNull: false,
     },
     eventId: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.UUID,
       references: {
         model: Event,
         key: "id",
@@ -29,7 +29,7 @@ const Booking = sequelize.define(
       allowNull: false,
     },
     ticketTypeId: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.UUID,
       references: {
         model: TicketType,
         key: "id",
@@ -37,21 +37,21 @@ const Booking = sequelize.define(
       allowNull: false,
     },
     quantity: {
-      type: Sequelize.INTEGER,
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
     },
     totalPrice: {
-      type: Sequelize.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0.0,
     },
     status: {
-      type: Sequelize.ENUM("pending", "confirmed", "cancelled", "checked-in"),
+      type: DataTypes.ENUM("pending", "confirmed", "cancelled", "checked-in"),
       defaultValue: "pending",
     },
     bookingReference: {
-      type: Sequelize.STRING,
+      type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },

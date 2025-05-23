@@ -160,8 +160,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null)
 
     try {
-      // Use a single endpoint but pass the role
-      const endpoint = `/api/login`
+      // Use a different endpoint for admin secret login
+      let endpoint = `/api/auth/login`
+      
+      // If the role is admin and coming from the admin login page, use the secret endpoint
+      if (userRole === "admin" && window.location.pathname.includes("/admin-login")) {
+        endpoint = `/api/auth/admin/secret-login`
+      }
 
       const data = await apiClient.post(endpoint, {
         email,
@@ -298,11 +303,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       let endpoint = ""
 
       if (role === "organizer") {
-        endpoint = `/api/organizer/profile`
+        endpoint = `/api/auth/organizer/profile`
       } else if (role === "attendee") {
-        endpoint = `/api/user/profile`
+        endpoint = `/api/auth/user/profile`
       } else if (role === "admin") {
-        endpoint = `/api/admin/profile`
+        endpoint = `/api/auth/admin/profile`
       } else {
         throw new Error("Invalid user role")
       }
