@@ -452,6 +452,7 @@ exports.createEvent = async (req, res) => {
     const userId = req.user.id
     const {
       title,
+      caption,
       description,
       longDescription,
       date,
@@ -463,6 +464,12 @@ exports.createEvent = async (req, res) => {
       image,
       gallery,
       maxAttendees,
+      // Additional fields from frontend
+      startDate,
+      endDate,
+      isFree,
+      price,
+      ticketInfo
     } = req.body
 
     // Find the organizer profile for this user
@@ -481,8 +488,9 @@ exports.createEvent = async (req, res) => {
     const event = await Event.create({
       id: uuidv4(),
       title,
+      caption: caption || null,
       description,
-      longDescription,
+      longDescription: longDescription || description,
       eventDate: date,
       time,
       location,
@@ -491,10 +499,26 @@ exports.createEvent = async (req, res) => {
       category,
       image,
       gallery,
-      organizerId: userId, // Using userId as organizerId
+      organizerId: organizer.id, // Using organizer.id instead of userId
       maxAttendees,
+      price: price || 0,
       approvalStatus: "pending", // Events need admin approval
     })
+
+    // If ticket info is provided and this is a paid event, create a ticket type
+    if (!isFree && ticketInfo && ticketInfo.name) {
+      await TicketType.create({
+        id: uuidv4(),
+        eventId: event.id,
+        name: ticketInfo.name,
+        description: ticketInfo.description || "",
+        price: parseFloat(ticketInfo.price) || 0,
+        quantity: maxAttendees || 100,
+        sold: 0,
+        available: maxAttendees || 100,
+        currency: "ETB", // Default currency
+      });
+    }
 
     res.status(201).json({
       success: true,

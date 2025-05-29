@@ -134,7 +134,7 @@ export class EventService {
    * Create a new event
    */
   static async createEvent(eventData: Partial<EventType>) {
-    return await apiClient.post<{ event: EventType; message: string }>("/api/organizer/events", eventData)
+    return await apiClient.post<{ event: EventType; message: string }>("/api/events", eventData)
   }
 
   /**

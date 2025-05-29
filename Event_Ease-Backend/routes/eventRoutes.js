@@ -9,6 +9,7 @@ const Joi = require("joi")
 // Validation schemas
 const createEventSchema = Joi.object({
   title: Joi.string().required(),
+  caption: Joi.string().optional(),
   description: Joi.string().required(),
   longDescription: Joi.string().optional(),
   date: Joi.date().required(),
@@ -20,6 +21,17 @@ const createEventSchema = Joi.object({
   image: Joi.string().optional(),
   gallery: Joi.array().items(Joi.string()).optional(),
   maxAttendees: Joi.number().integer().min(1).optional(),
+  // Additional fields from frontend
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
+  isFree: Joi.boolean().optional(),
+  price: Joi.number().optional(),
+  ticketInfo: Joi.object({
+    name: Joi.string().optional(),
+    description: Joi.string().optional(),
+    price: Joi.any().optional()
+  }).optional(),
+  additionalInfo: Joi.string().optional()
 })
 
 const updateEventSchema = Joi.object({
@@ -71,7 +83,7 @@ router.get("/test-events", (req, res) => {
 });
 
 // Protected routes
-router.post("/events", userAuth, checkRole("organizer"), validate(createEventSchema), eventController.createEvent)
+router.post("/events", userAuth, validate(createEventSchema), eventController.createEvent)
 router.put("/events/:id", userAuth, validate(updateEventSchema), eventController.updateEvent)
 router.delete("/events/:id", userAuth, eventController.deleteEvent)
 router.post("/events/:id/orders", userAuth, validate(createOrderSchema), eventController.createOrder)

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -28,7 +28,6 @@ import { useEvents } from "@/contexts/EventContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useAIGeneration } from "@/contexts/AIGenerationContext"
 import { AIEventActions } from "@/components/ai/ai-event-actions"
-import { useRouter as useNextRouter } from "next/router"
 
 // Ethiopian regions for autocomplete
 const ethiopianRegions = [
@@ -134,7 +133,7 @@ export default function CreateEventPage() {
   const [eventImages, setEventImages] = useState<string[]>([])
   const [documents, setDocuments] = useState<string[]>([])
   const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const nextRouter = useNextRouter()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const { createEvent, isLoading } = useEvents()
   const { isAuthenticated, role } = useAuth()
@@ -177,7 +176,7 @@ export default function CreateEventPage() {
 
   // Apply generated template to form when available
   useEffect(() => {
-    if (generatedTemplate && searchParams.get("useTemplate") === "true") {
+    if (generatedTemplate && searchParams?.get("useTemplate") === "true") {
       // Set details
       form.setValue("details.title", generatedTemplate.title)
       form.setValue("details.caption", generatedTemplate.caption)
@@ -261,19 +260,37 @@ export default function CreateEventPage() {
     setSubmissionError(null)
 
     try {
-      // Combine all form data
+      // Format dates for the backend
+      const startDateTime = new Date(`${format(data.details.startDate, "yyyy-MM-dd")}T${data.details.startTime}`)
+      const endDateTime = new Date(`${format(data.details.endDate, "yyyy-MM-dd")}T${data.details.endTime}`)
+
+      // Combine all form data to match backend API requirements
       const eventData = {
         title: data.details.title,
-        caption: data.details.caption || "",
         description: data.details.description,
-        startDate: new Date(`${format(data.details.startDate, "yyyy-MM-dd")}T${data.details.startTime}`).toISOString(),
-        endDate: new Date(`${format(data.details.endDate, "yyyy-MM-dd")}T${data.details.endTime}`).toISOString(),
-        location: `${data.mediaLocation.venue}, ${data.mediaLocation.city}, ${data.mediaLocation.region}`,
-        capacity: Number.parseInt(data.details.capacity),
+        longDescription: data.details.description, // Use the same description for now
+        date: startDateTime.toISOString(), // Backend expects a single date
+        time: data.details.startTime,
+        location: `${data.mediaLocation.venue}, ${data.mediaLocation.city}`, // Format location
+        address: `${data.mediaLocation.venue}, ${data.mediaLocation.city}, ${data.mediaLocation.region}`, // Format address
+        region: data.mediaLocation.region,
+        category: data.details.type, // Map type to category
+        image: coverImage || "",
+        gallery: eventImages,
+        maxAttendees: Number.parseInt(data.details.capacity),
+        // Additional fields not required by backend schema but used in frontend
+        caption: data.details.caption || "",
+        startDate: startDateTime.toISOString(),
+        endDate: endDateTime.toISOString(),
         isFree: !data.tickets.isPaid,
         price: data.tickets.isPaid ? Number.parseFloat(data.tickets.ticketPrice || "0") : 0,
-        image: coverImage || "",
-        images: eventImages,
+        // If ticket info is provided, include it for potential future use
+        ticketInfo: data.tickets.isPaid ? {
+          name: data.tickets.ticketName,
+          description: data.tickets.ticketDescription,
+          price: data.tickets.ticketPrice
+        } : null,
+        additionalInfo: data.tickets.additionalInfo || ""
       }
 
       // Use the createEvent function from the context
@@ -281,7 +298,7 @@ export default function CreateEventPage() {
 
       if (success) {
         // Redirect to events list on success
-        nextRouter.push("/dashboard/organizer/events")
+        router.push("/dashboard/organizer/events")
       }
     } catch (error) {
       console.error("Event creation error:", error)
@@ -348,9 +365,9 @@ export default function CreateEventPage() {
         description: "You must be logged in as an organizer to create events.",
         variant: "destructive",
       })
-      nextRouter.push("/login")
+      router.push("/login")
     }
-  }, [isAuthenticated, role, nextRouter])
+  }, [isAuthenticated, role, router])
 
   return (
     <div className="p-6 space-y-6">
